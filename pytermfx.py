@@ -18,7 +18,7 @@ class Terminal:
 		
 		self._raw = False
 		self._cbreak = False
-		self._color_mode = COLOR_RGB
+		self._color_mode = COLOR_256
 
 	def _handle_resize(self, signum, frame):
 		for h in self._resize_handlers:
