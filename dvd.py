@@ -1,8 +1,9 @@
-import pytermfx
+from pytermfx import Terminal, Color
 import time
+import random
 
 def main():
-	t = pytermfx.Terminal()
+	t = Terminal()
 	
 	# the beautiful art
 	art = [
@@ -20,10 +21,19 @@ def main():
 	pos = [t.w/2, t.h/2]
 	vel = [1.12, 0.67]
 
-	t.style_fg_256(21)
-	t.style_bg_256(231)
+	t.style_fg(Color.hex(0x0000FF))
+	t.style_bg(Color.hex(0x000000))
 	t.style_bold()
 	t.clear()
+
+	def changecol():
+		colors = (
+			Color.hex(0x0000FF),
+			Color.hex(0xFFFF00),
+			Color.hex(0x7700FF),
+			Color.hex(0xFF0077),
+			Color.hex(0xFF7700))
+		t.style_fg(random.choice(colors))
 
 	def update():
 		t.clear_box(pos[0]-aw/2, pos[1]-ah/2, aw, ah)
@@ -36,15 +46,19 @@ def main():
 		if pos[0] < aw/2:
 			pos[0] = aw/2
 			vel[0] = -vel[0]
+			changecol()
 		if pos[1] < ah/2+1:
 			pos[1] = ah/2+1
 			vel[1] = -vel[1]
+			changecol()
 		if pos[0] > t.w-1-aw/2:
 			pos[0] = t.w-1-aw/2
 			vel[0] = -vel[0]
+			changecol()
 		if pos[1] > t.h-1-ah/2:
 			pos[1] = t.h-1-ah/2
 			vel[1] = -vel[1]
+			changecol()
 
 		# update console
 		draw_art(t, art, pos[0], pos[1])
@@ -53,7 +67,7 @@ def main():
 	try:
 		while True:
 			update()
-			time.sleep(1/20)
+			time.sleep(1/30)
 	except KeyboardInterrupt:
 		t.reset()
 

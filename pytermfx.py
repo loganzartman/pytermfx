@@ -4,6 +4,8 @@ import sys
 
 ESC = "\x1b"
 CSI = ESC + "["
+COLOR_256 = 1
+COLOR_RGB = 2
 
 class Terminal:
 	def __init__(self):
@@ -16,6 +18,7 @@ class Terminal:
 		
 		self._raw = False
 		self._cbreak = False
+		self._color_mode = COLOR_RGB
 
 	def _handle_resize(self, signum, frame):
 		for h in self._resize_handlers:
@@ -62,6 +65,15 @@ class Terminal:
 		sys.stdout.flush()
 		self._buffer = []
 
+	def convert_color(self, color):
+		"""Converts a given Color to some ANSI format.
+		"""
+		if self._color_mode == COLOR_256:
+			return color.ansi_256()
+		if self._color_mode == COLOR_RGB:
+			return color.ansi_rgb()
+		raise ValueError("_color_mode is invalid.")
+
 	def clear(self):
 		"""Clear the screen.
 		"""
@@ -85,7 +97,7 @@ class Terminal:
 	def cursor_to(self, x, y):
 		"""Move the cursor to an absolute position.
 		"""
-		self.write(CSI, int(y), ";", int(x), "H")
+		self.write(CSI, int(y+1), ";", int(x+1), "H")
 
 	def style_bold(self):
 		self.write(CSI, "1m")
@@ -93,30 +105,58 @@ class Terminal:
 	def style_reset(self):
 		self.write(CSI, "0m")
 
-	def _write_rgb(self, r, g, b):
-		clip = lambda i: max(0, min(255, int(i)))		
-		self.write(clip(r), ";", clip(g), ";", clip(b))
-
-	def style_fg_256(self, col):
-		"""Set foreground to an 8-bit color
+	def style_fg(self, col):
+		"""Set foreground to a given color
 		"""
-		self.write(CSI, "38;5;", col, "m")
+		self.write(CSI, "38;", self.convert_color(col), "m")
 
-	def style_bg_256(self, col):
-		"""Set background to an 8-bit color
+	def style_bg(self, col):
+		"""Set background to a given color
 		"""
-		self.write(CSI, "48;5;", col, "m")
+		self.write(CSI, "48;", self.convert_color(col), "m")
 
-	def style_bg_rgb(self, r, g, b):
-		"""Set background to an RGB color
+class Color:
+	def __init__(self, r, g, b):
+		"""Construct a color from given r,g,b values.
+		Values should be in the range [0, 255]
 		"""
-		self.write(CSI, "48;2;")
-		self._write_rgb(r, g, b)
-		self.write("m")
+		clip = lambda c: int(max(0, min(255, c)))
+		self.r = clip(r)
+		self.g = clip(g)
+		self.b = clip(b)
 
-	def style_fg_rgb(self, r, g, b):
-		"""Set foreground to an RGB color
+	@staticmethod
+	def hex(hex):
+		"""Construct a color from a given hex value.
+		Red is: 0xFF0000
 		"""
-		self.write(CSI, "38;2;")
-		self._write_rgb(r, g, b)
-		self.write("m")
+		return Color(
+			(hex >> 16) & 0xFF,
+			(hex >>  8) & 0xFF,
+			 hex        & 0xFF)
+
+	def ansi_256(self):
+		"""Convert this color into ANSI 8-bit color format.
+		Red is converted to: "5;196"
+		"""
+		# grayscale case
+		if self.r == self.g == self.b:
+			col = 232 + int(self.r / 256 * 24)
+			return "5;" + str(col)
+
+		# 216-color RGB
+		scale = lambda c: int(c / 256 * 6)
+		col = 16
+		col += scale(self.b)
+		col += scale(self.g) * 6
+		col += scale(self.r) * 6 * 6
+		return "5;" + str(col)
+
+	def ansi_rgb(self):
+		"""Convert this color into ANSI RGB color format.
+		Red is converted to: "2;255;0;0"
+		"""
+		r = str(self.r)
+		g = str(self.g)
+		b = str(self.b)
+		return "".join(("2;", r, ";", g, ";", b))
