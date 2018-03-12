@@ -94,6 +94,9 @@ class Terminal:
 		self.flush()
 
 	def cursor_set_visible(self, visible=True):
+		"""Change the cursor visibility.
+		visible may be True or False.
+		"""
 		self.write(CSI, "?25", "h" if visible else "l")
 		self._cursor_visible = visible
 
@@ -103,9 +106,13 @@ class Terminal:
 		self.write(CSI, int(y+1), ";", int(x+1), "H")
 
 	def style_bold(self):
+		"""Enable bold style.
+		"""
 		self.write(CSI, "1m")
 
 	def style_reset(self):
+		"""Reset style.
+		"""
 		self.write(CSI, "0m")
 
 	def style_fg(self, col):
