@@ -3,6 +3,8 @@ from pytermfx.color import ColorMode
 import subprocess
 import signal
 import sys
+import termios
+import tty
 
 class Terminal:
 	def __init__(self):
@@ -13,9 +15,18 @@ class Terminal:
 		self.add_resize_handler(self.update_size)
 		self.update_size()
 		
+		self._original_attr = termios.tcgetattr(sys.stdin)
 		self._cbreak = False
 		self._color_mode = ColorMode.MODE_256
 		self._cursor_visible = False
+
+	def set_cbreak(self, cbreak=True):
+		"""Enable or disable cbreak mode.
+		"""
+		termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self._original_attr)
+		if cbreak:
+			tty.setcbreak(sys.stdin.fileno())
+		self._cbreak = cbreak
 
 	def set_color_mode(self, mode):
 		"""Change the color mode of the terminal.
