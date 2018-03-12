@@ -1,6 +1,7 @@
 import subprocess
 import signal
 import sys
+import colorsys
 
 ESC = "\x1b"
 CSI = ESC + "["
@@ -134,6 +135,15 @@ class Color:
 			(hex >> 16) & 0xFF,
 			(hex >>  8) & 0xFF,
 			 hex        & 0xFF)
+
+	@staticmethod
+	def rgb(r, g, b):
+		return Color(r * 255, g * 255, b * 255)
+
+	@staticmethod
+	def hsl(h, s, l):
+		r, g, b = colorsys.hls_to_rgb(h, l, s)
+		return Color.rgb(r, g, b)
 
 	def ansi_256(self):
 		"""Convert this color into ANSI 8-bit color format.
