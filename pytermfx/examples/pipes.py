@@ -3,11 +3,11 @@ from pytermfx.tools import Screensaver
 from random import random, randint, choice
 from time import sleep
 
-MAX_STEPS = 600
-N = 3
+MAX_STEPS = 800
+N = 5
 TURN_CHANCE = 0.08
-# CHARS = list("║═╚╝╔╗")
-CHARS = list("│─╰╯╭╮")
+CHARS = list("║═╚╝╔╗")
+# CHARS = list("│─╰╯╭╮")
 
 t = Terminal()
 i = MAX_STEPS
@@ -102,7 +102,7 @@ def update():
 	t.flush()
 
 def main():
-	app = Screensaver(t, 30, update=update)
+	app = Screensaver(t, 60, update=update)
 	app.start()
 	
 main()

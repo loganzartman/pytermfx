@@ -1,12 +1,11 @@
 from pytermfx import Terminal, Color
+from pytermfx.tools import Screensaver
 import time
 import random
 
 def main():
 	t = Terminal()
-	t.set_cbreak(True)
-	t.cursor_set_visible(False)
-	
+
 	# the beautiful art
 	art = [
 		"DDDDDDDDDVVVVVV        VVVVDDDDDDDDDD   ",
@@ -21,12 +20,11 @@ def main():
 	aw = len(art[0])
 	ah = len(art)
 	pos = [t.w/2, t.h/2]
-	vel = [1.12, 0.67]
+	vel = [1.12/2, 0.67/2]
 
 	t.style_fg(Color.hex(0x0000FF))
 	t.style_bg(Color.hex(0x000000))
 	t.style_bold()
-	t.clear()
 
 	def changecol():
 		colors = (
@@ -66,12 +64,8 @@ def main():
 		draw_art(t, art, pos[0], pos[1])
 		t.flush()
 
-	try:
-		while True:
-			update()
-			time.sleep(1/30)
-	except KeyboardInterrupt:
-		t.reset()
+	app = Screensaver(t, 60, update = update)
+	app.start()
 
 def draw_art(term, art, x, y):
 	w = len(art[0])

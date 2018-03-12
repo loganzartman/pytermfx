@@ -5,7 +5,7 @@ import math
 import time
 
 t = Terminal()
-t.set_color_mode(ColorMode.MODE_RGB)
+# t.set_color_mode(ColorMode.MODE_RGB)
 
 def main():
 	t.add_resize_handler(update)
@@ -13,8 +13,16 @@ def main():
 	t.set_cbreak(True)
 	update()
 	try:
-		while t.getch() != "q":
-			pass
+		while True:
+			c = t.getch()
+			if c == "q":
+				break
+			elif c == "r":
+				if t._color_mode == ColorMode.MODE_RGB:
+					t.set_color_mode(ColorMode.MODE_256)
+				else:
+					t.set_color_mode(ColorMode.MODE_RGB)
+				update()
 	except KeyboardInterrupt:
 		pass
 	finally:
@@ -32,6 +40,8 @@ def update():
 			t.write(" ")
 	
 	t.cursor_to(1, t.h - 2)
+	t.write("Press R to toggle color mode.")
+	t.cursor_to(1, t.h - 3)
 	t.write("Press Q to quit.")
 
 	t.flush()
