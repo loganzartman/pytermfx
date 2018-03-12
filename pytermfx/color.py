@@ -80,7 +80,7 @@ class Color:
 		for i, col in enumerate(colors):
 			if dist(colors[i], own_col) < dist(colors[min_i], own_col):
 				min_i = i
-		return str((40 if bg else 30) + ids[min_i])
+		return str((40 if bg else 30) + ids[min_i]) + "m"
 
 	def ansi_256(self, bg=False):
 		"""Convert this color into ANSI 8-bit color format.
@@ -98,7 +98,7 @@ class Color:
 			col += scale(self.b)
 			col += scale(self.g) * 6
 			col += scale(self.r) * 6 * 6
-		return ("48;5;" if bg else "38;5;") + str(col)
+		return ("48;5;" if bg else "38;5;") + str(col) + "m"
 
 	def ansi_rgb(self, bg=False):
 		"""Convert this color into ANSI RGB color format.
@@ -107,7 +107,7 @@ class Color:
 		r = str(self.r)
 		g = str(self.g)
 		b = str(self.b)
-		return "".join((("48;2;" if bg else "38;2;"), r, ";", g, ";", b))
+		return "".join((("48;2;" if bg else "38;2;"), r, ";", g, ";", b)) + "m"
 
 class NamedColor(Color):
 	"""Implements a color that is always one of the 16 named colors.
@@ -134,7 +134,7 @@ class NamedColor(Color):
 			return names_bright.index(target) + 60
 
 	def ansi_16(self, bg=False):
-		return str(self.id + (40 if bg else 30))
+		return str(self.id + (40 if bg else 30)) + "m"
 
 	def ansi_256(self, **kwargs):
 		return self.ansi_16(**kwargs)

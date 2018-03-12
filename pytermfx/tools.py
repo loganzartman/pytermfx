@@ -67,3 +67,25 @@ class Screensaver(TerminalApp):
 	def check_quit(self, char):
 		if char == self.quit_char:
 			self.eloop.stop()
+
+def draw_progress(terminal, color, progress=0, *, format="{0:.2f}%",
+                  left="[", right="]", fill="=", empty=" ", head=">"):
+	"""Draw a progress bar.
+	terminal - a Terminal instance
+	color    - a Color with which to fill the bar
+	progress - the progress in range [0, 1]
+	"""
+	# compute sizes
+	percentage = format.format(min(1, max(0, progress)) * 100)
+	inner_width = terminal.w - len(left + right) - 1 - len(percentage)
+	fill_len = int(inner_width * progress)
+
+	# render progress bar
+	terminal.cursor_set_visible(False)
+	terminal.clear_line().write(left)
+	terminal.style_fg(color)
+	terminal.write(fill * (fill_len - len(head))).write(head)
+	terminal.write(empty * (inner_width - fill_len))
+	terminal.style_reset().write(right+" ").write(percentage)
+	terminal.flush()
+	terminal.cursor_set_visible(True)

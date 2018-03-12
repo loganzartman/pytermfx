@@ -84,6 +84,7 @@ class Terminal:
 		"""Write an arbitrary number of things to the buffer.
 		"""
 		self._buffer += map(lambda i: str(i), things)
+		return self
 
 	def flush(self):
 		"""Flush the buffer to the terminal.
@@ -96,6 +97,7 @@ class Terminal:
 		"""Clear the screen.
 		"""
 		self.write(CSI, "2J")
+		return self
 
 	def clear_box(self, x, y, w, h):
 		"""Clears a region of the terminal
@@ -103,6 +105,14 @@ class Terminal:
 		for i in range(int(y), int(y+h)):
 			self.cursor_to(int(x), i)
 			self.write(" " * w)
+		return self
+
+	def clear_line(self):
+		"""Clear the line and move cursor to start
+		"""
+		self.cursor_to_start()
+		self.write(CSI, "1K")
+		return self
 
 	def reset(self):
 		"""Clean up the terminal state before exiting.
@@ -118,28 +128,40 @@ class Terminal:
 		"""
 		self.write(CSI, "?25", "h" if visible else "l")
 		self._cursor_visible = visible
+		return self
 
 	def cursor_to(self, x, y):
 		"""Move the cursor to an absolute position.
 		"""
 		self.write(CSI, int(y+1), ";", int(x+1), "H")
+		return self
+
+	def cursor_to_start(self):
+		"""Move the cursor to the start of the line.
+		"""
+		self.write(CSI, "1G")
+		return self
 
 	def style_bold(self):
 		"""Enable bold style.
 		"""
 		self.write(CSI, "1m")
+		return self
 
 	def style_reset(self):
 		"""Reset style.
 		"""
 		self.write(CSI, "0m")
+		return self
 
 	def style_fg(self, col):
 		"""Set foreground to a given color
 		"""
-		self.write(CSI, col.to_mode(self._color_mode, bg=False), "m")
+		self.write(CSI, col.to_mode(self._color_mode, bg=False))
+		return self
 
 	def style_bg(self, col):
 		"""Set background to a given color
 		"""
-		self.write(CSI, col.to_mode(self._color_mode, bg=True), "m")
+		self.write(CSI, col.to_mode(self._color_mode, bg=True))
+		return self

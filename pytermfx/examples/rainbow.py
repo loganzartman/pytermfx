@@ -5,7 +5,6 @@ import math
 import time
 
 t = Terminal()
-# t.set_color_mode(ColorMode.MODE_RGB)
 
 def main():
 	t.add_resize_handler(update)
