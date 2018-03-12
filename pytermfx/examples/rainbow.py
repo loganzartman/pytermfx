@@ -1,7 +1,11 @@
 from pytermfx import Terminal, Color
+import pytermfx
+import sys
+import math
 import time
 
 t = Terminal()
+t._color_mode = pytermfx.COLOR_256
 
 def main():
 	t.add_resize_handler(update)
@@ -18,7 +22,11 @@ def update():
 	for x in range(t.w):
 		for y in range(t.h):
 			t.cursor_to(x, y)
-			t.style_bg(Color(x / t.w * 255, y / t.h * 255, x * y / (t.w * t.h) * 255))
+			dx = (x/t.w - 0.5) / 0.5
+			dy = (y/t.h - 0.5) / 0.5
+			a = math.atan2(dy, dx)
+			d = math.sqrt(dx ** 2 + dy ** 2)
+			t.style_bg(Color.hsl(a / (math.pi * 2), 1.0, 1 - d * 0.5))
 			t.write(" ")
 	t.flush()
 
