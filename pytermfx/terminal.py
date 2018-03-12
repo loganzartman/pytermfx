@@ -34,7 +34,7 @@ class Terminal:
 		set colors. See ColorMode for more details.
 		"""
 		if not isinstance(mode, ColorMode):
-			raise ArgumentError("mode must be a ColorMode.")
+			raise ValueError("mode must be a ColorMode.")
 		self._color_mode = mode
 
 	def _handle_resize(self, signum, frame):
@@ -71,6 +71,14 @@ class Terminal:
 			return
 		
 		raise RuntimeError("No suitable method to get terminal size.")
+
+	def getch(self):
+		"""Get a single character from stdin in cbreak mode.
+		Blocks until the user performs an input. Only works if cbreak is on.
+		"""
+		if not self._cbreak:
+			raise ValueError("Must be in cbreak mode.")
+		return sys.stdin.read(1)
 
 	def write(self, *things):
 		"""Write an arbitrary number of things to the buffer.

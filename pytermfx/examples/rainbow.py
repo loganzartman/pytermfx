@@ -9,10 +9,12 @@ t.set_color_mode(ColorMode.MODE_RGB)
 
 def main():
 	t.add_resize_handler(update)
+	t.cursor_set_visible(False)
+	t.set_cbreak(True)
 	update()
 	try:
-		while True:
-			time.sleep(1/30)
+		while t.getch() != "q":
+			pass
 	except KeyboardInterrupt:
 		pass
 	finally:
@@ -28,6 +30,10 @@ def update():
 			d = math.sqrt(dx ** 2 + dy ** 2)
 			t.style_bg(Color.hsl(a / (math.pi * 2), 1.0, 1 - d))
 			t.write(" ")
+	
+	t.cursor_to(1, t.h - 2)
+	t.write("Press Q to quit.")
+
 	t.flush()
 
 main()
