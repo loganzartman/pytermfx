@@ -1,10 +1,11 @@
-from pytermfx import Terminal, Color
+from pytermfx import Terminal, Color, ColorMode
 import pytermfx
 import sys
 import math
 import time
 
 t = Terminal()
+t.set_color_mode(ColorMode.MODE_RGB)
 
 def main():
 	t.add_resize_handler(update)

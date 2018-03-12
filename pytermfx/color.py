@@ -4,6 +4,14 @@ import colorsys
 import math
 
 class ColorMode(Enum):
+	"""Represents the various types of ANSI escapes that set colors.
+	All modes other than MODE_RGB will approximate RGB colors with varying
+	degrees of accuracy. Terminal uses MODE_256 by default because most 
+	emulators support it, but many do not support 24-bit color.
+	MODE_16  - 3/4 bit color (named colors)
+	MODE_256 - 8 bit color
+	MODE_RGB - 24 bit color
+	"""
 	MODE_16  = 0
 	MODE_256 = 1
 	MODE_RGB = 2
@@ -50,6 +58,8 @@ class Color:
 
 	def ansi_16(self, bg=False):
 		"""Convert this color into ANSI 3/4-bit color format.
+		Red foreground is converted to: "91"
+		This converter is slow and inaccurate.
 		"""
 		# list of named ANSI colors and xterm color values
 		colors = ((0,0,0), (205,0,0), (0,205,0), (205,205,0),
@@ -74,7 +84,9 @@ class Color:
 
 	def ansi_256(self, bg=False):
 		"""Convert this color into ANSI 8-bit color format.
-		Red is converted to: "5;196"
+		Red foreground is converted to: "38;5;196"
+		This converter emits the 216 RGB colors and the 24 grayscale colors.
+		It does not use the 16 named colors.
 		"""
 		if self.r == self.g == self.b:
 			# grayscale case
@@ -90,7 +102,7 @@ class Color:
 
 	def ansi_rgb(self, bg=False):
 		"""Convert this color into ANSI RGB color format.
-		Red is converted to: "2;255;0;0"
+		Red foreground is converted to: "38;2;255;0;0"
 		"""
 		r = str(self.r)
 		g = str(self.g)

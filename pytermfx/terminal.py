@@ -13,16 +13,26 @@ class Terminal:
 		self.add_resize_handler(self.update_size)
 		self.update_size()
 		
-		self._raw = False
 		self._cbreak = False
 		self._color_mode = ColorMode.MODE_256
 		self._cursor_visible = False
+
+	def set_color_mode(self, mode):
+		"""Change the color mode of the terminal.
+		The color mode determines what kind of ANSI sequences are used to
+		set colors. See ColorMode for more details.
+		"""
+		if not isinstance(mode, ColorMode):
+			raise ArgumentError("mode must be a ColorMode.")
+		self._color_mode = mode
 
 	def _handle_resize(self, signum, frame):
 		for h in self._resize_handlers:
 			h()
 
 	def add_resize_handler(self, func):
+		"""Adds a handler for terminal resize.
+		"""
 		self._resize_handlers.append(func)
 
 	def update_size(self, defaults=None):
