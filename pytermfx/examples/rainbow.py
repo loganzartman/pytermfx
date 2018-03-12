@@ -5,7 +5,6 @@ import math
 import time
 
 t = Terminal()
-t._color_mode = pytermfx.COLOR_256
 
 def main():
 	t.add_resize_handler(update)
@@ -26,7 +25,7 @@ def update():
 			dy = (y/t.h - 0.5) / 0.5
 			a = math.atan2(dy, dx)
 			d = math.sqrt(dx ** 2 + dy ** 2)
-			t.style_bg(Color.hsl(a / (math.pi * 2), 1.0, 1 - d * 0.5))
+			t.style_bg(Color.hsl(a / (math.pi * 2), 1.0, 1 - d))
 			t.write(" ")
 	t.flush()
 

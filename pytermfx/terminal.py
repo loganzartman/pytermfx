@@ -1,4 +1,5 @@
 from pytermfx.pytermfx import *
+from pytermfx.color import ColorMode
 import subprocess
 import signal
 import sys
@@ -14,7 +15,8 @@ class Terminal:
 		
 		self._raw = False
 		self._cbreak = False
-		self._color_mode = COLOR_256
+		self._color_mode = ColorMode.MODE_256
+		self._cursor_visible = False
 
 	def _handle_resize(self, signum, frame):
 		for h in self._resize_handlers:
@@ -61,15 +63,6 @@ class Terminal:
 		sys.stdout.flush()
 		self._buffer = []
 
-	def convert_color(self, color):
-		"""Converts a given Color to some ANSI format.
-		"""
-		if self._color_mode == COLOR_256:
-			return color.ansi_256()
-		if self._color_mode == COLOR_RGB:
-			return color.ansi_rgb()
-		raise ValueError("_color_mode is invalid.")
-
 	def clear(self):
 		"""Clear the screen.
 		"""
@@ -104,9 +97,9 @@ class Terminal:
 	def style_fg(self, col):
 		"""Set foreground to a given color
 		"""
-		self.write(CSI, "38;", self.convert_color(col), "m")
+		self.write(CSI, col.to_mode(self._color_mode, bg=False), "m")
 
 	def style_bg(self, col):
 		"""Set background to a given color
 		"""
-		self.write(CSI, "48;", self.convert_color(col), "m")
+		self.write(CSI, col.to_mode(self._color_mode, bg=True), "m")
