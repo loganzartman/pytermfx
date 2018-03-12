@@ -83,6 +83,10 @@ class Terminal:
 		self.clear()
 		self.flush()
 
+	def cursor_set_visible(self, visible=True):
+		self.write(CSI, "?25", "h" if visible else "l")
+		self._cursor_visible = visible
+
 	def cursor_to(self, x, y):
 		"""Move the cursor to an absolute position.
 		"""

@@ -4,6 +4,7 @@ import random
 
 def main():
 	t = Terminal()
+	t.cursor_set_visible(False)
 	
 	# the beautiful art
 	art = [

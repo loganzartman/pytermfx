@@ -76,17 +76,16 @@ class Color:
 		"""Convert this color into ANSI 8-bit color format.
 		Red is converted to: "5;196"
 		"""
-		# grayscale case
 		if self.r == self.g == self.b:
+			# grayscale case
 			col = 232 + int(self.r / 256 * 24)
-			return "5;" + str(col)
-
-		# 216-color RGB
-		scale = lambda c: int(c / 256 * 6)
-		col = 16
-		col += scale(self.b)
-		col += scale(self.g) * 6
-		col += scale(self.r) * 6 * 6
+		else:
+			# 216-color RGB
+			scale = lambda c: int(c / 256 * 6)
+			col = 16
+			col += scale(self.b)
+			col += scale(self.g) * 6
+			col += scale(self.r) * 6 * 6
 		return ("48;5;" if bg else "38;5;") + str(col)
 
 	def ansi_rgb(self, bg=False):
