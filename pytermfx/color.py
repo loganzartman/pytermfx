@@ -108,3 +108,36 @@ class Color:
 		g = str(self.g)
 		b = str(self.b)
 		return "".join((("48;2;" if bg else "38;2;"), r, ";", g, ";", b))
+
+class NamedColor(Color):
+	"""Implements a color that is always one of the 16 named colors.
+	"""
+	def __init__(self, name_or_id):
+		if name_or_id in range(0, 16):
+			self.id = name_or_id
+		else:
+			try:
+				id = NamedColor.name_to_id(name_or_id)
+			except ValueError:
+				raise ValueError("name_or_id must be an integer ID in [0, 15] "
+					+ "or a color name.")
+			self.id = id
+
+	@staticmethod
+	def name_to_id(name):
+		names = ["black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"]
+		names_bright = ["bright" + name for name in names]
+		target = name.lower().replace(" ", "").replace("_", "").replace("light", "bright")
+		try:
+			return names.index(target)
+		except ValueError:
+			return names_bright.index(target) + 60
+
+	def ansi_16(self, bg=False):
+		return str(self.id + (40 if bg else 30))
+
+	def ansi_256(self, **kwargs):
+		return self.ansi_16(**kwargs)
+
+	def ansi_rgb(self, **kwargs):
+		return self.ansi_16(**kwargs)

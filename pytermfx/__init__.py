@@ -1,4 +1,3 @@
 from pytermfx.terminal import Terminal
-from pytermfx.color import Color
-from pytermfx.color import ColorMode
+from pytermfx.color import Color, ColorMode, NamedColor
 import pytermfx.tools
