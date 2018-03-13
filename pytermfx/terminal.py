@@ -130,6 +130,34 @@ class Terminal:
 		self._cursor_visible = visible
 		return self
 
+	def cursor_get_pos(self):
+		"""Retrieve the current (x,y) cursor position.
+		This is slow, so avoid using when unnecessary.
+		"""
+		old_status = self._cbreak
+		if not self._cbreak:
+			self.set_cbreak(True)
+		
+		# write DSR (device status report)
+		self.write(CSI, "6n")
+		self.flush()
+		
+		# read result from stdin
+		buf = []
+		while self.getch() != "[": # skip start
+			pass
+		c = ""
+		while c != "R": # read until end
+			buf.append(c)
+			c = self.getch()
+		parts = "".join(buf).split(";")
+
+		# restore old cbreak
+		if not old_status:
+			self.set_cbreak(False)
+
+		return (int(parts[1]) - 1, int(parts[0]) - 1)
+
 	def cursor_to(self, x, y):
 		"""Move the cursor to an absolute position.
 		"""
