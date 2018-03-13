@@ -47,21 +47,21 @@ Q: When should I call flush?
 A: Whenever you're done making a set of updates and want them to be displayed on screen.
 
 ### Styling text
-The `Terminal` instance allows you to format text.
+`Style` in combination with the `Terminal` instance allows you to format text.
 
 ```python
 from pytermfx import Terminal
 t = Terminal()
 
 # output some bold text
-t.style_bold()
+t.style(Style("bold"))
 t.write("Hello world!\n")
 t.style_reset()
 t.write("Not bold.\n")
 t.flush()
 
 # using print instead
-t.style_bold().flush()
+t.style(Style("italic")).flush()
 print("Hello world!")
 ```
 
@@ -72,13 +72,13 @@ from pytermfx import Terminal, Color, NamedColor
 t = Terminal()
 
 # output some sky-blue text on a purple background
-t.style_fg(Color.hex(0x87CEEB))        # build a color from RGB hex code
-t.style_bg(Color.hsl(-0.16, 1.0, 0.5)) # build a color from HSL values
+t.style(Color.hex(0x87CEEB))             # build a color from RGB hex code
+t.style(Color.hsl(-0.16, 1.0, 0.5).bg()) # build a background color from HSL values
 t.write("Sky blue\n")
 t.flush()
 
 # output some red text using a named color
-t.style_fg(NamedColor("red"))
+t.style(NamedColor("red"))
 t.write("Red!\n")
 t.flush()
 ```
