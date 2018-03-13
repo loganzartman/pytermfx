@@ -2,6 +2,9 @@
 ### Terminal interaction and formatting for Python without curses
 ---
 
+## Motivation
+I originally wanted to create this to help build terminal "screensavers", like [pipes.sh](https://github.com/pipeseroni/pipes.sh) (see my [pipes.py](https://github.com/loganzartman/pytermfx/blob/master/pytermfx/examples/pipes.py)). It might also be useful for things like [progress bars](https://github.com/loganzartman/pytermfx/blob/master/pytermfx/examples/progress_bar.py), or just simple text coloring in the console.
+
 ## Installation
 Requires Python 3.
 
