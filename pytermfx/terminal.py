@@ -192,6 +192,12 @@ class Terminal:
 		self.write(CSI, int(y+1), ";", int(x+1), "H")
 		return self
 
+	def cursor_to_x(self, x):
+		"""Move the cursor to a given column on the same line.
+		"""
+		self.write(CSI, int(x+1), "G")
+		return self
+
 	def cursor_move(self, x, y):
 		"""Move the cursor by a given amount.
 		"""

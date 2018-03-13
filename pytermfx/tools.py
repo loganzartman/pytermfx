@@ -1,5 +1,5 @@
 from pytermfx.pytermfx import *
-from pytermfx import Terminal
+from pytermfx import Terminal, NamedColor
 import asyncio
 import sys
 import time
@@ -70,8 +70,9 @@ class Screensaver(TerminalApp):
 		if char == self.quit_char:
 			self.eloop.stop()
 
-def draw_progress(terminal, color, progress=0, *, format="{0:.2f}%",
-                  left="[", right="]", fill="=", empty=" ", head=">"):
+def draw_progress(terminal, progress=0, label="", *, color=NamedColor("white"), 
+	              format="{0:.2f}%", left="[", right="]", fill="=", empty=" ",
+	              head=">", bar_left=0):
 	"""Draw a progress bar.
 	terminal - a Terminal instance
 	color    - a Color with which to fill the bar
@@ -79,15 +80,18 @@ def draw_progress(terminal, color, progress=0, *, format="{0:.2f}%",
 	"""
 	# compute sizes
 	percentage = format.format(min(1, max(0, progress)) * 100)
-	inner_width = terminal.w - len(left + right) - 1 - len(percentage)
-	fill_len = int(inner_width * progress)
+	w = terminal.w
+	left_align = max(len(label) + 1, bar_left)
+	inner_len = w - left_align - 1 - len(left + right) - 1 - len(percentage)
+	fill_len = int(inner_len * progress)
 
 	# render progress bar
 	terminal.cursor_set_visible(False)
-	terminal.clear_line().write(left)
+	terminal.clear_line().write(label)
+	terminal.cursor_to_x(left_align).write(left)
 	terminal.style(color)
 	terminal.write(fill * (fill_len - len(head))).write(head)
-	terminal.write(empty * (inner_width - fill_len))
-	terminal.style_reset().write(right+" ").write(percentage)
+	terminal.write(empty * (inner_len - fill_len))
+	terminal.style_reset().write(right, " ", percentage)
 	terminal.flush()
 	terminal.cursor_set_visible(True)
