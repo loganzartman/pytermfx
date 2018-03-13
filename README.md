@@ -123,10 +123,10 @@ t.flush()
 ```
 
 ### Enabling cbreak to accept keyboard input
-TODO. For now, see `pytermfx/examples/rainbow.py`
+TODO. For now, see `pytermfx/examples/colorwheel.py`
 
 ### Using input to exit the application
-TODO. For now, see `pytermfx/examples/rainbow.py`
+TODO. For now, see `pytermfx/examples/colorwheel.py`
 
 ### Doing that with TerminalApp
 TODO. For now, see `pytermfx/examples/dvd.py`

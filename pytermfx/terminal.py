@@ -15,7 +15,10 @@ class Terminal:
 		self.add_resize_handler(self.update_size)
 		self.update_size()
 		
-		self._original_attr = termios.tcgetattr(sys.stdin)
+		try:
+			self._original_attr = termios.tcgetattr(sys.stdin)
+		except termios.error:
+			self._original_attr = None
 		self._cbreak = False
 		self._color_mode = ColorMode.MODE_256
 		self._cursor_visible = False
@@ -23,6 +26,7 @@ class Terminal:
 	def set_cbreak(self, cbreak=True):
 		"""Enable or disable cbreak mode.
 		"""
+		assert(self._original_attr != None)
 		termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self._original_attr)
 		if cbreak:
 			tty.setcbreak(sys.stdin.fileno())
