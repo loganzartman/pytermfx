@@ -16,6 +16,7 @@ class TerminalApp:
 		self.terminal = terminal
 		self.on_input = kwargs["on_input"] if "on_input" in kwargs else lambda char: None
 		self.update = kwargs["update"] if "update" in kwargs else lambda: None
+		self.terminal.add_resize_handler(self.update)
 		self.eloop = asyncio.get_event_loop()
 
 	def start(self):
@@ -25,6 +26,7 @@ class TerminalApp:
 			self.update()
 		self.eloop.add_reader(sys.stdin.fileno(), readfunc)
 		try:
+			self.update()
 			self.eloop.run_forever()
 		except KeyboardInterrupt:
 			pass
