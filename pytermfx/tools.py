@@ -82,13 +82,14 @@ def draw_progress(terminal, progress=0, label="", *, color=NamedColor("white"),
 	percentage = format.format(min(1, max(0, progress)) * 100)
 	w = terminal.w
 	left_align = max(len(label) + 1, bar_left)
+	left_diff = left_align - (len(label) + 1)
 	inner_len = w - left_align - 1 - len(left + right) - 1 - len(percentage)
 	fill_len = int(inner_len * progress)
 
 	# render progress bar
 	terminal.cursor_set_visible(False)
 	terminal.clear_line().write(label)
-	terminal.cursor_to_x(left_align).write(left)
+	terminal.write(" " * left_diff, left)
 	terminal.style(color)
 	terminal.write(fill * (fill_len - len(head))).write(head)
 	terminal.write(empty * (inner_len - fill_len))
