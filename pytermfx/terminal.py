@@ -86,6 +86,12 @@ class Terminal:
 		self._buffer += map(lambda i: str(i), things)
 		return self
 
+	def writeln(self, *things):
+		"""Writes an arbitrary number of things to the buffer with a newline.
+		"""
+		self.write(*things, "\n")
+		return self
+
 	def flush(self):
 		"""Flush the buffer to the terminal.
 		"""
@@ -111,7 +117,13 @@ class Terminal:
 		"""Clear the line and move cursor to start
 		"""
 		self.cursor_to_start()
-		self.write(CSI, "1K")
+		self.write(CSI, "2K")
+		return self
+
+	def clear_to_end(self):
+		"""Clear to the end of the line
+		"""
+		self.write(CSI, "0K")
 		return self
 
 	def reset(self):
@@ -141,7 +153,7 @@ class Terminal:
 		# write DSR (device status report)
 		self.write(CSI, "6n")
 		self.flush()
-		
+
 		# read result from stdin
 		buf = []
 		while self.getch() != "[": # skip start
@@ -158,11 +170,35 @@ class Terminal:
 
 		return (int(parts[1]) - 1, int(parts[0]) - 1)
 
+	def cursor_save(self):
+		"""Save the cursor position
+		"""
+		self.write(CSI, "s")
+		return self
+
+	def cursor_restore(self):
+		"""Restore the cursor position
+		"""
+		self.write(CSI, "u")
+		return self
+
 	def cursor_to(self, x, y):
 		"""Move the cursor to an absolute position.
 		"""
 		self.write(CSI, int(y+1), ";", int(x+1), "H")
 		return self
+
+	def cursor_move(self, x, y):
+		"""Move the cursor by a given amount.
+		"""
+		if x < 0:
+			self.write(CSI, abs(int(x)), "D")
+		elif x > 0:
+			self.write(CSI, int(x), "C")
+		if y < 0:
+			self.write(CSI, abs(int(x)), "A")
+		elif y > 0:
+			self.write(CSI, int(x), "B")
 
 	def cursor_to_start(self):
 		"""Move the cursor to the start of the line.
