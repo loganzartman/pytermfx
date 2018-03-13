@@ -1,5 +1,5 @@
 from pytermfx.pytermfx import *
-from pytermfx.color import ColorMode
+from pytermfx.color import Color, ColorMode
 import subprocess
 import signal
 import sys
@@ -206,26 +206,18 @@ class Terminal:
 		self.write(CSI, "1G")
 		return self
 
-	def style_bold(self):
-		"""Enable bold style.
+	def style(self, style):
+		"""Apply a style, which may be a Color or something with .ansi()
+		Accepts a Color or a Style.
 		"""
-		self.write(CSI, "1m")
+		if isinstance(style, Color):
+			self.write(style.to_mode(self._color_mode))
+		else:
+			self.write(style.ansi())
 		return self
 
 	def style_reset(self):
 		"""Reset style.
 		"""
 		self.write(CSI, "0m")
-		return self
-
-	def style_fg(self, col):
-		"""Set foreground to a given color
-		"""
-		self.write(CSI, col.to_mode(self._color_mode, bg=False))
-		return self
-
-	def style_bg(self, col):
-		"""Set background to a given color
-		"""
-		self.write(CSI, col.to_mode(self._color_mode, bg=True))
 		return self

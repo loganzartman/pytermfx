@@ -17,7 +17,7 @@ class ColorMode(Enum):
 	MODE_RGB = 2
 
 class Color:
-	def __init__(self, r, g, b):
+	def __init__(self, r, g, b, bg=False):
 		"""Construct a color from given r,g,b values.
 		Values should be in the range [0, 255]
 		"""
@@ -25,6 +25,19 @@ class Color:
 		self.r = clip(r)
 		self.g = clip(g)
 		self.b = clip(b)
+		self._bg = bg
+
+	def bg(self):
+		"""Make this a background color.
+		"""
+		self._bg = True
+		return self
+
+	def fg(self):
+		"""Make this a foreground color.
+		"""
+		self._bg = False
+		return self
 
 	@staticmethod
 	def hex(hex):
@@ -45,18 +58,18 @@ class Color:
 		r, g, b = colorsys.hls_to_rgb(h, l, s)
 		return Color.rgb(r, g, b)
 
-	def to_mode(self, color_mode, bg):
+	def to_mode(self, color_mode):
 		"""Output a string in a given ANSI color format.
 		"""
 		if color_mode == ColorMode.MODE_16:
-			return self.ansi_16(bg=bg)
+			return self.ansi_16()
 		if color_mode == ColorMode.MODE_256:
-			return self.ansi_256(bg=bg)
+			return self.ansi_256()
 		if color_mode == ColorMode.MODE_RGB:
-			return self.ansi_rgb(bg=bg)
+			return self.ansi_rgb()
 		raise ValueError("color_mode is invalid. Should be a ColorMode enum.")
 
-	def ansi_16(self, bg=False):
+	def ansi_16(self):
 		"""Convert this color into ANSI 3/4-bit color format.
 		Red foreground is converted to: "91"
 		This converter is slow and inaccurate.
@@ -80,9 +93,9 @@ class Color:
 		for i, col in enumerate(colors):
 			if dist(colors[i], own_col) < dist(colors[min_i], own_col):
 				min_i = i
-		return str((40 if bg else 30) + ids[min_i]) + "m"
+		return CSI + str((40 if self._bg else 30) + ids[min_i]) + "m"
 
-	def ansi_256(self, bg=False):
+	def ansi_256(self):
 		"""Convert this color into ANSI 8-bit color format.
 		Red foreground is converted to: "38;5;196"
 		This converter emits the 216 RGB colors and the 24 grayscale colors.
@@ -98,21 +111,22 @@ class Color:
 			col += scale(self.b)
 			col += scale(self.g) * 6
 			col += scale(self.r) * 6 * 6
-		return ("48;5;" if bg else "38;5;") + str(col) + "m"
+		return CSI + ("48;5;" if self._bg else "38;5;") + str(col) + "m"
 
-	def ansi_rgb(self, bg=False):
+	def ansi_rgb(self):
 		"""Convert this color into ANSI RGB color format.
 		Red foreground is converted to: "38;2;255;0;0"
 		"""
 		r = str(self.r)
 		g = str(self.g)
 		b = str(self.b)
-		return "".join((("48;2;" if bg else "38;2;"), r, ";", g, ";", b)) + "m"
+		esc = ("48;2;" if self._bg else "38;2;")
+		return "".join((CSI, esc, r, ";", g, ";", b)) + "m"
 
 class NamedColor(Color):
 	"""Implements a color that is always one of the 16 named colors.
 	"""
-	def __init__(self, name_or_id):
+	def __init__(self, name_or_id, bg=False):
 		if name_or_id in range(0, 16):
 			self.id = name_or_id
 		else:
@@ -122,6 +136,7 @@ class NamedColor(Color):
 				raise ValueError("name_or_id must be an integer ID in [0, 15] "
 					+ "or a color name.")
 			self.id = id
+		self._bg = bg
 
 	@staticmethod
 	def name_to_id(name):
@@ -133,8 +148,8 @@ class NamedColor(Color):
 		except ValueError:
 			return names_bright.index(target) + 60
 
-	def ansi_16(self, bg=False):
-		return str(self.id + (40 if bg else 30)) + "m"
+	def ansi_16(self):
+		return CSI + str(self.id + (40 if self._bg else 30)) + "m"
 
 	def ansi_256(self, **kwargs):
 		return self.ansi_16(**kwargs)

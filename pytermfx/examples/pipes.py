@@ -60,7 +60,7 @@ class Pipe:
 		
 		# prepare to draw pipe
 		t.cursor_to(old_x, old_y)
-		t.style_fg(self.color)
+		t.style(self.color)
 
 		# turning
 		if turned:

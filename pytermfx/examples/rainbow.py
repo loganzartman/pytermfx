@@ -35,7 +35,7 @@ def update():
 			dy = (y/t.h - 0.5) / 0.5
 			a = math.atan2(dy, dx)
 			d = math.sqrt(dx ** 2 + dy ** 2)
-			t.style_bg(Color.hsl(a / (math.pi * 2), 1.0, 1 - d))
+			t.style(Color.hsl(a / (math.pi * 2), 1.0, 1 - d).bg())
 			t.write(" ")
 	
 	t.cursor_to(1, t.h - 2)

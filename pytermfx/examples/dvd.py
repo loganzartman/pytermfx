@@ -1,4 +1,4 @@
-from pytermfx import Terminal, Color
+from pytermfx import Terminal, Color, Style
 from pytermfx.tools import Screensaver
 import time
 import random
@@ -22,9 +22,10 @@ def main():
 	pos = [t.w/2, t.h/2]
 	vel = [1.12/2, 0.67/2]
 
-	t.style_fg(Color.hex(0x0000FF))
-	t.style_bg(Color.hex(0x000000))
-	t.style_bold()
+	t.style(Color.hex(0x0000FF))
+	t.style(Color.hex(0x000000).bg())
+	t.style(Style("bold"))
+	t.flush()
 
 	def changecol():
 		colors = (
@@ -33,7 +34,7 @@ def main():
 			Color.hex(0x7700FF),
 			Color.hex(0xFF0077),
 			Color.hex(0xFF7700))
-		t.style_fg(random.choice(colors))
+		t.style(random.choice(colors))
 
 	def update():
 		t.clear_box(pos[0]-aw/2, pos[1]-ah/2, aw, ah)

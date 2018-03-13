@@ -83,7 +83,7 @@ def draw_progress(terminal, color, progress=0, *, format="{0:.2f}%",
 	# render progress bar
 	terminal.cursor_set_visible(False)
 	terminal.clear_line().write(left)
-	terminal.style_fg(color)
+	terminal.style(color)
 	terminal.write(fill * (fill_len - len(head))).write(head)
 	terminal.write(empty * (inner_width - fill_len))
 	terminal.style_reset().write(right+" ").write(percentage)
