@@ -102,7 +102,7 @@ def update():
 	t.flush()
 
 def main():
-	app = Screensaver(t, 60, update=update)
+	app = Screensaver(t, 500, update=update)
 	app.start()
 	
 main()

@@ -23,7 +23,7 @@ class TerminalApp:
 		def readfunc():
 			c = self.terminal.getch()
 			self.on_input(c)
-			self.update()
+			# self.update()
 		self.eloop.add_reader(sys.stdin.fileno(), readfunc)
 		try:
 			self.update()
