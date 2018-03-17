@@ -2,7 +2,7 @@ from pytermfx import Terminal, Style
 import sys
 
 t = Terminal()
-black = Style()
+black = Style.none
 white = Style("reverse")
 
 i = 0

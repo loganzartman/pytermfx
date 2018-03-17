@@ -23,6 +23,8 @@ class Style:
 			self.add(s)
 
 	def add(self, style):
+		if style == "reset":
+			raise ValueError("Use Style.none instance to reset style.")
 		assert(style in sgr_styles)
 		self.styles.add(sgr_styles[style])
 
@@ -33,5 +35,13 @@ class Style:
 		self.styles = set()
 
 	def ansi(self):
-		output = "".join(CSI + str(s) + "m" for s in self.styles)
-		return "".join((CSI, "0m", output))
+		return "".join(CSI + str(s) + "m" for s in self.styles)
+
+class NoneStyle(Style):
+	def __init__(self):
+		pass
+
+	def ansi(self):
+		return CSI + "0m"
+
+Style.none = NoneStyle()

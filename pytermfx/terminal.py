@@ -209,6 +209,7 @@ class Terminal:
 			self.write(CSI, abs(int(x)), "A")
 		elif y > 0:
 			self.write(CSI, int(x), "B")
+		return self
 
 	def cursor_to_start(self):
 		"""Move the cursor to the start of the line.
@@ -216,14 +217,15 @@ class Terminal:
 		self.write(CSI, "1G")
 		return self
 
-	def style(self, style):
-		"""Apply a style, which may be a Color or something with .ansi()
+	def style(self, *styles):
+		"""Apply styles, which may be a Color or something with .ansi()
 		Accepts a Color or a Style.
 		"""
-		if isinstance(style, Color):
-			self.write(style.to_mode(self._color_mode))
-		else:
-			self.write(style.ansi())
+		for style in styles:
+			if isinstance(style, Color):
+				self.write(style.to_mode(self._color_mode))
+			else:
+				self.write(style.ansi())
 		return self
 
 	def style_reset(self):
