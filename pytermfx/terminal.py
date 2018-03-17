@@ -99,9 +99,13 @@ class Terminal:
 	def flush(self):
 		"""Flush the buffer to the terminal.
 		"""
-		print("".join(self._buffer), end="")
-		sys.stdout.flush()
+		print("".join(self._buffer), end="", flush=True)
 		self._buffer = []
+
+	def print(self, *things, sep="", end="\n"):
+		"""Acts like Python's print(). Forces a flush.
+		"""
+		self.write(sep.join(things), end).flush()
 
 	def clear(self):
 		"""Clear the screen.
