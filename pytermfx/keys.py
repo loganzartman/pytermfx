@@ -39,6 +39,31 @@ class Key:
 	def __str__(self):
 		return self.key.upper() if self.shift else self.key
 
+KEY_UP = Key("up")
+KEY_DOWN = Key("down")
+KEY_RIGHT = Key("right")
+KEY_LEFT = Key("left")
+
+KEY_INS = Key("insert")
+KEY_DEL = Key("delete")
+KEY_HOME = Key("home")
+KEY_END = Key("end")
+KEY_PGUP = Key("pageup")
+KEY_PGDN = Key("pagedown")
+
+KEY_F1 = Key("f1")
+KEY_F2 = Key("f2")
+KEY_F3 = Key("f3")
+KEY_F4 = Key("f4")
+KEY_F5 = Key("f5")
+KEY_F6 = Key("f6")
+KEY_F7 = Key("f7")
+KEY_F8 = Key("f8")
+KEY_F9 = Key("f9")
+KEY_F10 = Key("f10")
+KEY_F11 = Key("f11")
+KEY_F12 = Key("f12")
+
 class Mod(Key):
 	def __init__(self, ctrl=False, alt=False, shift=False):
 		self.key = None

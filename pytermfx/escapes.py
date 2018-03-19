@@ -1,24 +1,29 @@
 from pytermfx.pytermfx import *
 from pytermfx.keys import *
 
-KEY_UP = Key("up")
-KEY_DOWN = Key("down")
-KEY_RIGHT = Key("right")
-KEY_LEFT = Key("left")
-KEY_INS = Key("insert")
-KEY_DEL = Key("delete")
-KEY_HOME = Key("home")
-KEY_END = Key("end")
-KEY_PGUP = Key("pageup")
-KEY_PGDN = Key("pagedown")
-
 ESC_MAP = {
 	"[": {
 		"A": KEY_UP,
 		"B": KEY_DOWN,
 		"C": KEY_RIGHT,
 		"D": KEY_LEFT,
-		"2": {"~": KEY_INS},
+		"1": {
+			"1": {"~": KEY_F1},
+			"2": {"~": KEY_F2},
+			"3": {"~": KEY_F3},
+			"4": {"~": KEY_F4},
+			"5": {"~": KEY_F5},
+			"7": {"~": KEY_F6},
+			"8": {"~": KEY_F7},
+			"9": {"~": KEY_F8}
+		},
+		"2": {
+			"~": KEY_INS,
+			"0": {"~": KEY_F9},
+			"1": {"~": KEY_F10},
+			"3": {"~": KEY_F11},
+			"4": {"~": KEY_F12}
+		},
 		"3": {"~": KEY_DEL},
 		"7": {"~": KEY_HOME},
 		"8": {"~": KEY_END},
