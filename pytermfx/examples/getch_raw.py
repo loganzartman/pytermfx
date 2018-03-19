@@ -5,8 +5,8 @@ t.set_cbreak(True)
 
 try:
 	while True:
-		c = t.getch()
-		t.writeln(c).flush()
+		c = t.getch_raw()
+		t.writeln(ord(c)).flush()
 except KeyboardInterrupt:
 	pass
 finally:

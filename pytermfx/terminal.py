@@ -1,5 +1,6 @@
 from pytermfx.pytermfx import *
 from pytermfx.color import Color, ColorMode
+from pytermfx.escapes import read_escape
 import subprocess
 import signal
 import sys
@@ -78,6 +79,15 @@ class Terminal:
 
 	def getch(self):
 		"""Get a single character from stdin in cbreak mode.
+		Blocks until the user performs an input. Only works if cbreak is on.
+		"""
+		if not self._cbreak:
+			raise ValueError("Must be in cbreak mode.")
+		return read_escape(sys.stdin)
+
+	def getch_raw(self):
+		"""Get a single character from stdin in cbreak mode.
+		Does not decode escape sequences.
 		Blocks until the user performs an input. Only works if cbreak is on.
 		"""
 		if not self._cbreak:
@@ -164,12 +174,12 @@ class Terminal:
 
 		# read result from stdin
 		buf = []
-		while self.getch() != "[": # skip start
+		while self.getch_raw() != "[": # skip start
 			pass
 		c = ""
 		while c != "R": # read until end
 			buf.append(c)
-			c = self.getch()
+			c = self.getch_raw()
 		parts = "".join(buf).split(";")
 
 		# restore old cbreak
