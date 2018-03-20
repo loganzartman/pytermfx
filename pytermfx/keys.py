@@ -24,25 +24,36 @@ class Key:
 			return NotImplemented
 
 	def __add__(self, other):
-		k = Key(self.key, ctrl = self.ctrl, alt = self.alt, shift = self.shift)
+		k = self.clone()
 		k += other
 		return k
 
 	def __iadd__(self, other):
 		if not isinstance(other, Mod):
 			return NotImplemented
-		self.ctrl = self.ctrl or other.ctrl
-		self.alt = self.alt or other.alt
-		self.shift = self.shift or other.shift
-		return self
+		k = self.clone()
+		k.ctrl = self.ctrl or other.ctrl
+		k.alt = self.alt or other.alt
+		k.shift = self.shift or other.shift
+		return k
 
 	def __str__(self):
 		return self.key.upper() if self.shift else self.key
+
+	def str_long(self):
+		keys = (self.ctrl, self.alt, self.shift, self.key)
+		names = ("ctrl", "alt", "shift", self.key)
+		return "+".join(name for k, name in zip(keys, names) if k)
+
+	def clone(self):
+		return Key(self.key, ctrl = self.ctrl, alt = self.alt, shift = self.shift)
 
 KEY_UP = Key("up")
 KEY_DOWN = Key("down")
 KEY_RIGHT = Key("right")
 KEY_LEFT = Key("left")
+
+KEY_TAB = Key("\t")
 
 KEY_INS = Key("insert")
 KEY_DEL = Key("delete")
@@ -71,6 +82,10 @@ class Mod(Key):
 		self.alt = alt
 		self.shift = shift
 
+	def clone(self):
+		return Mod(ctrl = self.ctrl, alt = self.alt, shift = self.shift)
+
+MOD_NONE = Mod()
 MOD_CTRL = Mod(ctrl=True)
 MOD_ALT = Mod(alt=True)
 MOD_SHIFT = Mod(shift=True)
