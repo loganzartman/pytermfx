@@ -3,6 +3,8 @@ from pytermfx.keys import *
 
 KEY_MAP = {}
 KEY_MAP.update({chr(i + 1): Key(chr(97 + i), ctrl=True) for i in range(26)})
+del KEY_MAP[chr(9)] # unfortunately ctrl+i is the same as tab and we have no other way
+                    # to recognize this.
 
 ESC_MAP = {
 	"[": {
