@@ -1,6 +1,11 @@
 from pytermfx.pytermfx import *
 from pytermfx.keys import *
 
+"""Supports escape sequences for keyboard input.
+Be forewarned: this is messy and not portable.
+It supports most of the keys I have on my keyboard.
+"""
+
 KEY_MAP = {}
 KEY_MAP.update({chr(i + 1): Key(chr(97 + i), ctrl=True) for i in range(26)})
 del KEY_MAP[chr(9)] # unfortunately ctrl+i is the same as tab and we have no other way
@@ -45,27 +50,27 @@ ESC_MAP = {
 		},
 		"7": {
 			"~": KEY_HOME,
-			 "$": KEY_HOME + MOD_SHIFT,
-			 "^": KEY_HOME + MOD_CTRL,
-			 "@": KEY_HOME + MOD_CTRL + MOD_SHIFT,
+			"$": KEY_HOME + MOD_SHIFT,
+			"^": KEY_HOME + MOD_CTRL,
+			"@": KEY_HOME + MOD_CTRL + MOD_SHIFT,
 		},
 		"8": {
 			"~": KEY_END,
-			 "$": KEY_END + MOD_SHIFT,
-			 "^": KEY_END + MOD_CTRL,
-			 "@": KEY_END + MOD_CTRL + MOD_SHIFT,
+			"$": KEY_END + MOD_SHIFT,
+			"^": KEY_END + MOD_CTRL,
+			"@": KEY_END + MOD_CTRL + MOD_SHIFT,
 		},
 		"5": {
 			"~": KEY_PGUP,
-			 "$": KEY_PGUP + MOD_SHIFT,
-			 "^": KEY_PGUP + MOD_CTRL,
-			 "@": KEY_PGUP + MOD_CTRL + MOD_SHIFT,
+			"$": KEY_PGUP + MOD_SHIFT,
+			"^": KEY_PGUP + MOD_CTRL,
+			"@": KEY_PGUP + MOD_CTRL + MOD_SHIFT,
 		},
 		"6": {
 			"~": KEY_PGDN,
-			 "$": KEY_PGDN + MOD_SHIFT,
-			 "^": KEY_PGDN + MOD_CTRL,
-			 "@": KEY_PGDN + MOD_CTRL + MOD_SHIFT,
+			"$": KEY_PGDN + MOD_SHIFT,
+			"^": KEY_PGDN + MOD_CTRL,
+			"@": KEY_PGDN + MOD_CTRL + MOD_SHIFT,
 		}
 	},
 	"O": {
