@@ -23,8 +23,8 @@ class TerminalApp:
 		def readfunc():
 			c = self.terminal.getch()
 			self.on_input(c)
-			self.update()
 		self.eloop.add_reader(sys.stdin.fileno(), readfunc)
+		self.terminal._handle_resize()
 		try:
 			self.update()
 			self.eloop.run_forever()
@@ -96,3 +96,14 @@ def draw_progress(terminal, progress=0, label="", *, color=NamedColor("white"),
 	terminal.style_reset().write(right, " ", percentage)
 	terminal.flush()
 	terminal.cursor_set_visible(True)
+
+def draw_hline(terminal, y, ch="═"):
+	terminal.cursor_to(0, y)
+	terminal.write(ch * terminal.w)
+	terminal.flush()
+
+def draw_vline(terminal, x, ch="║"):
+	for y in range(terminal.h):
+		terminal.cursor_to(x, y)
+		terminal.write(ch)
+	terminal.flush()

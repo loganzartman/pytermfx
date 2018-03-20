@@ -44,7 +44,7 @@ class Terminal:
 			raise ValueError("mode must be a ColorMode.")
 		self._color_mode = mode
 
-	def _handle_resize(self, signum, frame):
+	def _handle_resize(self, signum=0, frame=None):
 		for h in self._resize_handlers:
 			h()
 
