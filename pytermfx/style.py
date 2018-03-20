@@ -41,6 +41,15 @@ class NoneStyle(Style):
 	def __init__(self):
 		pass
 
+	def add():
+		return NotImplemented
+
+	def remove():
+		return NotImplemented
+
+	def clear():
+		return NotImplemented
+
 	def ansi(self):
 		return CSI + "0m"
 

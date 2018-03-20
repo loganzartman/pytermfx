@@ -8,7 +8,9 @@ import termios
 import tty
 
 class Terminal:
-	def __init__(self):
+	def __init__(self, input_file=sys.stdin, output_file=sys.stdout):
+		self.in_file = input_file
+		self.out_file = output_file
 		self._buffer = []
 		
 		signal.signal(signal.SIGWINCH, self._handle_resize)
@@ -28,9 +30,9 @@ class Terminal:
 		"""Enable or disable cbreak mode.
 		"""
 		assert(self._original_attr != None)
-		termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self._original_attr)
+		termios.tcsetattr(self.in_file, termios.TCSADRAIN, self._original_attr)
 		if cbreak:
-			tty.setcbreak(sys.stdin.fileno())
+			tty.setcbreak(self.in_file.fileno())
 		self._cbreak = cbreak
 
 	def set_color_mode(self, mode):
@@ -83,7 +85,7 @@ class Terminal:
 		"""
 		if not self._cbreak:
 			raise ValueError("Must be in cbreak mode.")
-		return read_escape(sys.stdin)
+		return read_escape(self.in_file)
 
 	def getch_raw(self):
 		"""Get a single character from stdin in cbreak mode.
@@ -92,7 +94,7 @@ class Terminal:
 		"""
 		if not self._cbreak:
 			raise ValueError("Must be in cbreak mode.")
-		return sys.stdin.read(1)
+		return self.in_file.read(1)
 
 	def write(self, *things):
 		"""Write an arbitrary number of things to the buffer.
@@ -109,7 +111,7 @@ class Terminal:
 	def flush(self):
 		"""Flush the buffer to the terminal.
 		"""
-		print("".join(self._buffer), end="", flush=True)
+		print("".join(self._buffer), end="", file=self.out_file, flush=True)
 		self._buffer = []
 
 	def print(self, *things, sep="", end="\n"):

@@ -5,10 +5,24 @@
 ## Motivation
 I originally wanted to create this to help build terminal "screensavers", like [pipes.sh](https://github.com/pipeseroni/pipes.sh) (see my [pipes.py](https://github.com/loganzartman/pytermfx/blob/master/pytermfx/examples/pipes.py)). It might also be useful for things like [progress bars](https://github.com/loganzartman/pytermfx/blob/master/pytermfx/examples/progress_bar.py), or just simple text coloring in the console.
 
+## Capabilities
+* Cursor movement, screen clearing, etc. (`pytermfx.Terminal`)
+* Text coloring in 256-color or RGB format (`pytermfx.Color`)
+* Text styling (`pytermfx.Style`)
+* Toggle cbreak mode (`Terminal.set_cbreak()`)
+* Keyboard input with support for escape sequences (`pytermfx.Terminal`, `Terminal.getch()`)
+	* Read individual key-presses
+	* Read arrow keys, function keys, etc.
+	* Detect when keys are pressed with modifiers
+* More
+
+## OS Support
+* Only supports Unix systems. Good support for most terminal emulators, such as `urxvt`, `st`, `xterm`. Some support for Windows 10 terminal (with bash for Windows).
+
 ## Installation
 Requires Python 3.
 
-`pip install pytermfx`
+`pip install pytermfx` (version 0.3.0)
 
 [pytermfx on PyPI](https://pypi.org/project/pytermfx/)
 
@@ -123,7 +137,7 @@ t.flush()
 ```
 
 ### Enabling cbreak to accept keyboard input
-TODO. For now, see `pytermfx/examples/colorwheel.py`
+TODO. For now, see `pytermfx/examples/colorwheel.py` and `pytermfx/examples/getch.py`
 
 ### Using input to exit the application
 TODO. For now, see `pytermfx/examples/colorwheel.py`
