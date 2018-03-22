@@ -5,6 +5,10 @@ from time import clock
 t = Terminal()
 t.set_cbreak(True)
 t.mouse_enable_experimental("drag")
+t.writeln("Click and drag to draw")
+t.writeln("Press C to clear")
+t.writeln("Press Q to quit")
+t.flush()
 
 try:
 	while True:
