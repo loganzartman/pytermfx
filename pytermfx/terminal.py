@@ -150,13 +150,16 @@ class Terminal:
 		self.write(CSI, "2J")
 		return self
 
-	def clear_box(self, x, y, w, h):
-		"""Clears a region of the terminal
+	def fill_box(self, x, y, w, h, ch):
+		"""Fills a region of the terminal
 		"""
-		for i in range(int(y), int(y+h)):
-			self.cursor_to(int(x), i)
-			self.write(" " * w)
+		for i in range(max(int(y), 0), min(self.w, int(y+h))):
+			self.cursor_to(max(int(x), 0), i)
+			self.write(ch * min(min(w, w+x), self.w - x))
 		return self
+
+	def clear_box(self, x, y, w, h):
+		return self.fill_box(x, y, w, h, " ")
 
 	def clear_line(self):
 		"""Clear the line and move cursor to start
