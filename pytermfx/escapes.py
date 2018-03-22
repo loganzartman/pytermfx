@@ -6,6 +6,12 @@ Be forewarned: this is messy and not portable.
 It supports most of the keys I have on my keyboard.
 """
 
+def parse_mouse(file):
+	btns = ord(file.read(1))
+	x = ord(file.read(1)) - 33
+	y = ord(file.read(1)) - 33
+	return MouseMove(x, y)
+
 KEY_MAP = {}
 KEY_MAP.update({chr(i + 1): Key(chr(97 + i), ctrl=True) for i in range(26)})
 del KEY_MAP[chr(9)] # unfortunately ctrl+i is the same as tab and we have no other way
@@ -13,6 +19,7 @@ del KEY_MAP[chr(9)] # unfortunately ctrl+i is the same as tab and we have no oth
 
 ESC_MAP = {
 	"[": {
+		"M": parse_mouse,
 		"A": KEY_UP,
 		"B": KEY_DOWN,
 		"C": KEY_RIGHT,
@@ -111,6 +118,8 @@ def read_escape(file):
 		if c not in m:
 			break
 
+		if callable(m[c]):
+			return m[c](file)
 		if type(m[c]) == Key:
 			return m[c] + mod
 		elif type(m[c]) == Mod:

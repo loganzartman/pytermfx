@@ -35,6 +35,31 @@ class Terminal:
 			tty.setcbreak(self.in_file.fileno())
 		self._cbreak = cbreak
 
+	def mouse_enable_experimental(self, mode):
+		"""Enable experimental mouse support.
+		"""
+		if not self._cbreak:
+			raise ValueError("Must be in cbreak mode.")
+		MODE_MAP = {
+			"click": "?1001h",
+			"drag": "?1002h",
+			"move": "?1003h"}
+		assert(mode in MODE_MAP)
+		self._mouse = True
+		self.write(CSI, MODE_MAP[mode]) # read movements
+		self.write(CSI, "?1005h") # use UTF-8 encoding
+		self.flush()
+
+	def mouse_disable_experimental(self):
+		"""Disable experimental mouse support.
+		"""
+		if not self._mouse:
+			return
+		self.write(CSI, "?1000h") # disable mouse
+		self.write(CSI, "?1000l") # disable mouse
+		self.flush()
+		self._mouse = False
+
 	def set_color_mode(self, mode):
 		"""Change the color mode of the terminal.
 		The color mode determines what kind of ANSI sequences are used to
@@ -149,9 +174,11 @@ class Terminal:
 	def reset(self):
 		"""Clean up the terminal state before exiting.
 		"""
-		self.write(ESC, "c") # reset state
 		self.cursor_to(0, 0)
 		self.clear()
+		self.set_cbreak(False)
+		self.mouse_disable_experimental()
+		self.write(ESC, "c") # reset state
 		self.flush()
 
 	def cursor_set_visible(self, visible=True):

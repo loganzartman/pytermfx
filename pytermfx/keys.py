@@ -89,3 +89,14 @@ MOD_NONE = Mod()
 MOD_CTRL = Mod(ctrl=True)
 MOD_ALT = Mod(alt=True)
 MOD_SHIFT = Mod(shift=True)
+
+class MouseMove:
+	def __init__(self, x, y):
+		self.x = x
+		self.y = y
+
+	def str_long(self):
+		return "".join(("mouse @ ", str(self.x), ",", str(self.y)))
+
+	def clone(self):
+		return MouseMove(self.x, self.y)
