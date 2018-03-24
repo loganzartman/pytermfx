@@ -7,10 +7,15 @@ It supports most of the keys I have on my keyboard.
 """
 
 def parse_mouse(file):
-	btns = ord(file.read(1))
+	btns = ord(file.read(1)) - 32
+	left = btns & 0b11 == 0b00
+	right = btns & 0b11 == 0b10
+	moved = btns & 0b100000
+	down = not moved and left or right
+	up = not moved and not (left or right)
 	x = ord(file.read(1)) - 33
 	y = ord(file.read(1)) - 33
-	return MouseMove(x, y)
+	return MouseMove(x, y, left=left, right=right, down=down, up=up, btns=btns)
 
 KEY_MAP = {}
 KEY_MAP.update({chr(i + 1): Key(chr(97 + i), ctrl=True) for i in range(26)})

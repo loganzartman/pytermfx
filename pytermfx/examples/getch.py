@@ -2,7 +2,7 @@ from pytermfx import Terminal
 
 t = Terminal()
 t.set_cbreak(True)
-t.mouse_enable_experimental("drag")
+t.mouse_enable_experimental("move")
 
 try:
 	while True:
@@ -11,4 +11,4 @@ try:
 except KeyboardInterrupt:
 	pass
 finally:
-	t.writeln().flush()
+	t.reset()

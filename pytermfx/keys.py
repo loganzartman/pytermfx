@@ -91,12 +91,19 @@ MOD_ALT = Mod(alt=True)
 MOD_SHIFT = Mod(shift=True)
 
 class MouseMove:
-	def __init__(self, x, y):
+	def __init__(self, x, y, *, left = False, right = False, down = False, up = False, btns = 0):
 		self.x = x
 		self.y = y
+		self.left = left
+		self.right = right
+		self.down = down
+		self.up = up
+		self.btns = btns
 
 	def str_long(self):
-		return "".join(("mouse @ ", str(self.x), ",", str(self.y)))
+		btn_states = zip((self.down, self.up, self.left, self.right), ("down", "up", "left", "right"))
+		btn_string = "+".join(name for state, name in btn_states if state)
+		return "".join(("mouse ", btn_string, " @ ", str(self.x), ",", str(self.y)))
 
 	def clone(self):
 		return MouseMove(self.x, self.y)

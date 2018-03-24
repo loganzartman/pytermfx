@@ -25,6 +25,7 @@ class Terminal:
 		self._cbreak = False
 		self._color_mode = ColorMode.MODE_256
 		self._cursor_visible = False
+		self._mouse = False
 
 	def set_cbreak(self, cbreak=True):
 		"""Enable or disable cbreak mode.
@@ -42,8 +43,8 @@ class Terminal:
 			raise ValueError("Must be in cbreak mode.")
 		MODE_MAP = {
 			"click": "?1001h",
-			"drag": "?1002h",
-			"move": "?1003h"}
+			"drag":  "?1002h",
+			"move":  "?1003h"}
 		assert(mode in MODE_MAP)
 		self._mouse = True
 		self.write(CSI, MODE_MAP[mode]) # read movements
@@ -55,8 +56,10 @@ class Terminal:
 		"""
 		if not self._mouse:
 			return
-		self.write(CSI, "?1000h") # disable mouse
-		self.write(CSI, "?1000l") # disable mouse
+		# disable mouse
+		self.write(CSI, "?1001l") 
+		self.write(CSI, "?1002l") 
+		self.write(CSI, "?1003l") 
 		self.flush()
 		self._mouse = False
 
