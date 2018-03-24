@@ -11,7 +11,7 @@ def parse_mouse(file):
 	left = btns & 0b11 == 0b00
 	right = btns & 0b11 == 0b10
 	moved = btns & 0b100000
-	down = not moved and left or right
+	down = not moved and (left or right)
 	up = not moved and not (left or right)
 	x = ord(file.read(1)) - 33
 	y = ord(file.read(1)) - 33
