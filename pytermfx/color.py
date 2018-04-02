@@ -103,7 +103,10 @@ class Color:
 		"""
 		if self.r == self.g == self.b:
 			# grayscale case
-			col = 232 + int(self.r / 256 * 24)
+			if self.r == 255: # pure white
+				col = 231
+			else:
+				col = 232 + int(self.r / 256 * 24)
 		else:
 			# 216-color RGB
 			scale = lambda c: int(c / 256 * 6)
