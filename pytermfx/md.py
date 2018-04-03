@@ -49,15 +49,16 @@ def _parse_newline(*, terminal, match, active_env, i):
 	active_env["header"] = 0
 	return i + 1
 
+_rc = lambda regex: re.compile(regex) 
 _env_parsers = OrderedDict([
-	(r"\*\*",              _parse_bold),          # **bold**
-	(r"__",                _parse_underline),     # __underline__
-	(r"\*",                _parse_italic),        # *italic*
-	(r"_",                 _parse_italic),        # _italic_
-	(r"~~",                _parse_strikethrough), # ~~strikethrough~~
-	(r"`",                 _parse_inline_code),   # `code`
-	(r"(^|\n)(#{1,6})\s*", _parse_header),        # # Header
-	(r"\n",                _parse_newline)
+	(_rc(r"\*\*"),              _parse_bold),          # **bold**
+	(_rc(r"__"),                _parse_underline),     # __underline__
+	(_rc(r"\*"),                _parse_italic),        # *italic*
+	(_rc(r"_"),                 _parse_italic),        # _italic_
+	(_rc(r"~~"),                _parse_strikethrough), # ~~strikethrough~~
+	(_rc(r"`"),                 _parse_inline_code),   # `code`
+	(_rc(r"(^|\n)(#{1,6})\s*"), _parse_header),        # # Header
+	(_rc(r"\n"),                _parse_newline)
 ])
 
 def render(terminal, s):
@@ -92,7 +93,7 @@ def render(terminal, s):
 	while i < len(buf):
 		matched = False
 		for regex, parser in _env_parsers.items():
-			match = re.match(regex, buf[i:])
+			match = regex.match(buf[i:])
 			if match:
 				matched = True
 				i = parser(terminal = terminal,
