@@ -5,6 +5,8 @@ from pytermfx import Terminal, Style, NamedColor
 from collections import OrderedDict
 import re
 
+tab_size = 2
+
 _style_map = {
 	("bold", True): Style("bold"),
 	("italic", True): Style("italic"),
@@ -18,8 +20,19 @@ _style_map = {
 	("header", 6): (Style("bold"), NamedColor("light black")),
 }
 
+def _apply_style(terminal, active_env):
+	terminal.style(Style.none)
+	for env, state in active_env.items():
+		if state and (env, state) in _style_map:
+			thing = _style_map[(env, state)]
+			if hasattr(thing, "__iter__"):
+				terminal.style(*thing)
+			else:
+				terminal.style(thing)
+
 def _env_parse_flag(name, *, terminal, match, active_env, i):
 	active_env[name] = not active_env[name]
+	_apply_style(terminal, active_env)
 	return i + len(match.group(0))
 
 def _parse_bold(**kwargs):
@@ -37,28 +50,80 @@ def _parse_strikethrough(**kwargs):
 def _parse_inline_code(**kwargs):
 	return _env_parse_flag("inline-code", **kwargs)
 
+def _render_link(*, terminal, match):
+	terminal.style(Style("underline"), NamedColor("light cyan"))
+	terminal.write(match.group(1))
+	terminal.style(Style.none, NamedColor("cyan"))
+	terminal.write(" [", match.group(2), "]")
+
+def _parse_link_ref(*, terminal, match, active_env, i):
+	_render_link(terminal=terminal, match=match)
+	_apply_style(terminal, active_env)
+	return i + len(match.group(0))
+
+def _parse_link_url(*, terminal, match, active_env, i):
+	_render_link(terminal=terminal, match=match)
+	_apply_style(terminal, active_env)
+	return i + len(match.group(0))
+
+def _parse_ref(*, terminal, match, active_env, i):
+	terminal.style(NamedColor("cyan"))
+	terminal.write(match.group(1),": ")
+	terminal.style(Style.none)
+	terminal.write(match.group(2))
+	_apply_style(terminal, active_env)
+	return i + len(match.group(0))
+
+def _parse_code_block(*, terminal, match, active_env, i):
+	terminal.write("\n")
+	terminal.style(NamedColor("red")).write(match.group(1))
+	terminal.style(NamedColor("bright white"), NamedColor("light black").bg()).writeln()
+	terminal.write(match.group(2))
+	terminal.style(Style.none)
+	terminal.write("\n")
+	return i + len(match.group(0))
+
 def _parse_header(*, terminal, match, active_env, i):
 	if match.group(1) == "\n":
 		terminal.write("\n\n")
 
 	active_env["header"] = len(match.group(2))
+	_apply_style(terminal, active_env)
 	return i + len(match.group(0))
+
+def _parse_li(*, terminal, match, active_env, i):
+	level = 0
+	if match.group(1):
+		level += len(match.group(1)) // 4
+	terminal.write("  ");
+	terminal.write(" " * (tab_size * level));
+	terminal.style(NamedColor("yellow"))
+	terminal.write(match.group(2).replace("*", "•").replace("-", "–"))
+	_apply_style(terminal, active_env)
+	return i + len(match.group(1) or "") + len(match.group(2))
 
 def _parse_newline(*, terminal, match, active_env, i):
 	terminal.write("\n")
 	active_env["header"] = 0
+	_apply_style(terminal, active_env)
 	return i + 1
 
-_rc = lambda regex: re.compile(regex) 
+_rc = lambda regex: re.compile(regex, flags=re.MULTILINE) 
 _env_parsers = OrderedDict([
-	(_rc(r"\*\*"),              _parse_bold),          # **bold**
-	(_rc(r"__"),                _parse_underline),     # __underline__
-	(_rc(r"\*"),                _parse_italic),        # *italic*
-	(_rc(r"_"),                 _parse_italic),        # _italic_
-	(_rc(r"~~"),                _parse_strikethrough), # ~~strikethrough~~
-	(_rc(r"`"),                 _parse_inline_code),   # `code`
-	(_rc(r"(^|\n)(#{1,6})\s*"), _parse_header),        # # Header
-	(_rc(r"\n"),                _parse_newline)
+	(_rc(r"(^|\n)(#{1,6})\s*"),          _parse_header),        # # Header,
+	(_rc(r"^(    *)?(\d+\.) .+$"),       _parse_li),            # 1. numerical list
+	(_rc(r"^(    *)?([*\-]) .+$"),       _parse_li),            # * bulleted list
+	(_rc(r"\*\*"),                       _parse_bold),          # **bold**
+	(_rc(r"__"),                         _parse_underline),     # __underline__
+	(_rc(r"\*"),                         _parse_italic),        # *italic*
+	(_rc(r"_"),                          _parse_italic),        # _italic_
+	(_rc(r"~~"),                         _parse_strikethrough), # ~~strikethrough~~
+	(_rc(r"\[(.+?)\]\[(.+?)\]"),         _parse_link_ref),      # [title][link ref]
+	(_rc(r"\[(.+?)\]\((.+?)\)"),         _parse_link_url),      # [title][link url]
+	(_rc(r"^\[(.+?)\]: (.+)$"),          _parse_ref),           # [ref]: url
+	(_rc(r"```(\w*)\n([\s\S]*?)\n```"),  _parse_code_block),    # ```code```
+	(_rc(r"`"),                          _parse_inline_code),   # `code`
+	(_rc(r"\n"),                         _parse_newline)
 ])
 
 def render(terminal, s):
@@ -80,16 +145,6 @@ def render(terminal, s):
 		"inline-code": False,
 		"header": 0}
 
-	def apply_style():
-		terminal.style(Style.none)
-		for env, state in active_env.items():
-			if state and (env, state) in _style_map:
-				thing = _style_map[(env, state)]
-				if hasattr(thing, "__iter__"):
-					terminal.style(*thing)
-				else:
-					terminal.style(thing)
-
 	while i < len(buf):
 		matched = False
 		for regex, parser in _env_parsers.items():
@@ -100,7 +155,6 @@ def render(terminal, s):
 				           match = match,
 				           active_env = active_env,
 				           i = i)
-				apply_style()
 				break
 		if not matched:
 			terminal.write(buf[i])
