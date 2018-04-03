@@ -31,6 +31,9 @@ def _apply_style(terminal, active_env):
 				terminal.style(thing)
 
 def _env_parse_flag(name, *, terminal, match, active_env, i):
+	if name != "inline-code" and active_env["inline-code"]:
+		terminal.write(match.group(0))
+		return i + 1
 	active_env[name] = not active_env[name]
 	_apply_style(terminal, active_env)
 	return i + len(match.group(0))
@@ -75,10 +78,14 @@ def _parse_ref(*, terminal, match, active_env, i):
 	return i + len(match.group(0))
 
 def _parse_code_block(*, terminal, match, active_env, i):
-	terminal.write("\n")
 	terminal.style(NamedColor("red")).write(match.group(1))
-	terminal.style(NamedColor("bright white"), NamedColor("light black").bg()).writeln()
-	terminal.write(match.group(2))
+	for line in match.group(2).split("\n"):
+		terminal.writeln()
+		terminal.style(Style.none)
+		terminal.write(" " * tab_size)
+		terminal.style(NamedColor("light black").bg()).write(" ")
+		terminal.style(Style.none, NamedColor("bright white"))
+		terminal.write(" ", line)
 	terminal.style(Style.none)
 	terminal.write("\n")
 	return i + len(match.group(0))
@@ -112,7 +119,8 @@ _rc = lambda regex: re.compile(regex, flags=re.MULTILINE)
 _env_parsers = OrderedDict([
 	(_rc(r"(^|\n)(#{1,6})\s*"),          _parse_header),        # # Header,
 	(_rc(r"^(    *)?(\d+\.) .+$"),       _parse_li),            # 1. numerical list
-	(_rc(r"^(    *)?([*\-]) .+$"),       _parse_li),            # * bulleted list
+	(_rc(r"^(    *)?([*+\-]) .+$"),      _parse_li),            # * bulleted list
+	(_rc(r"\*\*"),                       _parse_bold),          # > block quote
 	(_rc(r"\*\*"),                       _parse_bold),          # **bold**
 	(_rc(r"__"),                         _parse_underline),     # __underline__
 	(_rc(r"\*"),                         _parse_italic),        # *italic*
@@ -148,7 +156,7 @@ def render(terminal, s):
 	while i < len(buf):
 		matched = False
 		for regex, parser in _env_parsers.items():
-			match = regex.match(buf[i:])
+			match = regex.match(buf, i)
 			if match:
 				matched = True
 				i = parser(terminal = terminal,
