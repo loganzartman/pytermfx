@@ -78,7 +78,9 @@ def _parse_ref(*, terminal, match, active_env, i):
 	return i + len(match.group(0))
 
 def _parse_code_block(*, terminal, match, active_env, i):
-	terminal.style(NamedColor("red")).write(match.group(1))
+	if match.group(1):
+		terminal.style(NamedColor("light green"))
+		terminal.write("\n  ", " " * tab_size, match.group(1))
 	for line in match.group(2).split("\n"):
 		terminal.writeln()
 		terminal.style(Style.none)
@@ -120,7 +122,6 @@ _env_parsers = OrderedDict([
 	(_rc(r"(^|\n)(#{1,6})\s*"),          _parse_header),        # # Header,
 	(_rc(r"^(    *)?(\d+\.) .+$"),       _parse_li),            # 1. numerical list
 	(_rc(r"^(    *)?([*+\-]) .+$"),      _parse_li),            # * bulleted list
-	(_rc(r"\*\*"),                       _parse_bold),          # > block quote
 	(_rc(r"\*\*"),                       _parse_bold),          # **bold**
 	(_rc(r"__"),                         _parse_underline),     # __underline__
 	(_rc(r"\*"),                         _parse_italic),        # *italic*
