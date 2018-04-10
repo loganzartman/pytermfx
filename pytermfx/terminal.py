@@ -11,21 +11,21 @@ class Terminal:
 	def __init__(self, input_file=sys.stdin, output_file=sys.stdout):
 		self.in_file = input_file
 		self.out_file = output_file
+		self._cbreak = False
+		self._color_mode = ColorMode.MODE_256
+		self._cursor_visible = False
+		self._mouse = None
 		self._buffer = []
-		
-		signal.signal(signal.SIGWINCH, self._handle_resize)
-		self._resize_handlers = []
-		self.add_resize_handler(self.update_size)
-		self.update_size()
 		
 		try:
 			self._original_attr = termios.tcgetattr(sys.stdin)
 		except termios.error:
 			self._original_attr = None
-		self._cbreak = False
-		self._color_mode = ColorMode.MODE_256
-		self._cursor_visible = False
-		self._mouse = False
+
+		signal.signal(signal.SIGWINCH, self._handle_resize)
+		self._resize_handlers = []
+		self.add_resize_handler(self.update_size)
+		self.update_size()
 
 	def set_cbreak(self, cbreak=True):
 		"""Enable or disable cbreak mode.
@@ -46,7 +46,7 @@ class Terminal:
 			"drag":  "?1002h",
 			"move":  "?1003h"}
 		assert(mode in MODE_MAP)
-		self._mouse = True
+		self._mouse = mode
 		self.write(CSI, MODE_MAP[mode]) # read movements
 		self.write(CSI, "?1005h") # use UTF-8 encoding
 		self.flush()
@@ -61,7 +61,7 @@ class Terminal:
 		self.write(CSI, "?1002l") 
 		self.write(CSI, "?1003l") 
 		self.flush()
-		self._mouse = False
+		self._mouse = None
 
 	def set_color_mode(self, mode):
 		"""Change the color mode of the terminal.
@@ -87,25 +87,18 @@ class Terminal:
 		Raises an exception if no size detection method works.
 		"""
 		try:
-			size = subprocess.check_output("stty size", shell=True).split(" ")
-			self.w = int(size[0])
-			self.h = int(size[1])
+			self.cursor_save()
+			self.cursor_to(9999, 9999)
+			x, y = self.cursor_get_pos()
+			self.w = x + 1
+			self.h = y + 1
+			self.cursor_restore()
 			return
 		except:
-			pass
-
-		try:
-			self.w = int(subprocess.check_output("tput cols", shell=True))
-			self.h = int(subprocess.check_output("tput lines", shell=True))
-			return
-		except:
-			pass
-
-		if defaults:
-			self.w, self.h = defaults
-			return
-		
-		raise RuntimeError("No suitable method to get terminal size.")
+			if defaults:
+				self.w, self.h = defaults
+				return
+			raise RuntimeError("No suitable method to get terminal size.")
 
 	def getch(self):
 		"""Get a single character from stdin in cbreak mode.
@@ -202,6 +195,7 @@ class Terminal:
 		old_status = self._cbreak
 		if not self._cbreak:
 			self.set_cbreak(True)
+		termios.tcflush(self.in_file, termios.TCIOFLUSH)
 		
 		# write DSR (device status report)
 		self.write(CSI, "6n")
