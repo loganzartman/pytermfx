@@ -1,278 +1,138 @@
-from pytermfx.pytermfx import *
 from pytermfx.color import Color, ColorMode
-from pytermfx.escapes import read_escape
-import subprocess
-import signal
+from pytermfx.adaptors.base import BaseAdaptor
+from pytermfx.adaptors.vt100 import VT100Adaptor
 import sys
-import termios
-import tty
 
 class Terminal:
-	def __init__(self, input_file=sys.stdin, output_file=sys.stdout):
-		self.in_file = input_file
-		self.out_file = output_file
-		self._cbreak = False
-		self._color_mode = ColorMode.MODE_256
-		self._cursor_visible = False
-		self._mouse = None
-		self._buffer = []
-		
-		try:
-			self._original_attr = termios.tcgetattr(sys.stdin)
-		except termios.error:
-			self._original_attr = None
+    def __init__(self, input_file=sys.stdin, output_file=sys.stdout):
+        args = {
+            "input_file": input_file,
+            "output_file": output_file, 
+            "resize_handler": self.update_size}
+        try:
+            self.adaptor = VT100Adaptor(**args)
+        except:
+            self.adaptor = BaseAdaptor(**args)
+        self._resize_handlers = [self.update_size]
+        self.update_size()
+    
+    def add_resize_handler(self, func):
+        """Adds a handler for terminal resize.
+        """
+        self._resize_handlers.append(func)
+    
+    def _handle_resize(self):
+        for h in self._resize_handlers:
+            h()
+    
+    def update_size(self, defaults=None):
+        """Retrieve and store the dimensions of the terminal window.
+        Sets self.w and self.h with current data if possible.
+        Raises an exception if no size detection method works.
+        """
+        try:
+            self.w, self.h = self.adaptor.get_size()
+        except:
+            if defaults is not None:
+                self.w, self.h = defaults
+            else:
+                raise
+    
+    def set_cbreak(self, cbreak=True):
+        return self.adaptor.set_cbreak(cbreak)
 
-		signal.signal(signal.SIGWINCH, self._handle_resize)
-		self._resize_handlers = []
-		self.add_resize_handler(self.update_size)
-		self.update_size()
+    def mouse_enable(self, mode="move"):
+        return self.adaptor.mouse_enable(mode)
 
-	def set_cbreak(self, cbreak=True):
-		"""Enable or disable cbreak mode.
-		"""
-		assert(self._original_attr != None)
-		termios.tcsetattr(self.in_file, termios.TCSADRAIN, self._original_attr)
-		if cbreak:
-			tty.setcbreak(self.in_file.fileno())
-		self._cbreak = cbreak
+    def getch(self):
+        """Get a single character from stdin in cbreak mode.
+        Blocks until the user performs an input. Only works if cbreak is on.
+        """
+        return self.adaptor.getch()
 
-	def mouse_enable_experimental(self, mode):
-		"""Enable experimental mouse support.
-		"""
-		if not self._cbreak:
-			raise ValueError("Must be in cbreak mode.")
-		MODE_MAP = {
-			"click": "?1001h",
-			"drag":  "?1002h",
-			"move":  "?1003h"}
-		assert(mode in MODE_MAP)
-		self._mouse = mode
-		self.write(CSI, MODE_MAP[mode]) # read movements
-		self.write(CSI, "?1005h") # use UTF-8 encoding
-		self.flush()
+    def getch_raw(self):
+        """Get a single character from stdin in cbreak mode.
+        Does not decode escape sequences.
+        Blocks until the user performs an input. Only works if cbreak is on.
+        """
+        return self.adaptor.getch_raw()
+    
+    def write(self, *things):
+        """Write an arbitrary number of things to the buffer.
+        """
+        return self.adaptor.write(*things)
 
-	def mouse_disable_experimental(self):
-		"""Disable experimental mouse support.
-		"""
-		if not self._mouse:
-			return
-		# disable mouse
-		self.write(CSI, "?1001l") 
-		self.write(CSI, "?1002l") 
-		self.write(CSI, "?1003l") 
-		self.flush()
-		self._mouse = None
+    def writeln(self, *things):
+        """Writes an arbitrary number of things to the buffer with a newline.
+        """
+        return self.adaptor.writeln(*things)
 
-	def set_color_mode(self, mode):
-		"""Change the color mode of the terminal.
-		The color mode determines what kind of ANSI sequences are used to
-		set colors. See ColorMode for more details.
-		"""
-		if not isinstance(mode, ColorMode):
-			raise ValueError("mode must be a ColorMode.")
-		self._color_mode = mode
+    def flush(self):
+        """Flush the buffer to the terminal.
+        """
+        return self.adaptor.flush()
 
-	def _handle_resize(self, signum=0, frame=None):
-		for h in self._resize_handlers:
-			h()
+    def print(self, *things, sep="", end="\n"):
+        """Acts like Python's print(). Forces a flush.
+        """
+        return self.adaptor.write(sep.join(things), end).flush()
 
-	def add_resize_handler(self, func):
-		"""Adds a handler for terminal resize.
-		"""
-		self._resize_handlers.append(func)
+    def clear(self):
+        """Clear the screen.
+        """
+        return self.adaptor.clear() 
 
-	def update_size(self, defaults=None):
-		"""Retrieve and store the dimensions of the terminal window.
-		Sets self.w and self.h with current data if possible.
-		Raises an exception if no size detection method works.
-		"""
-		try:
-			self.cursor_save()
-			self.cursor_to(9999, 9999)
-			x, y = self.cursor_get_pos()
-			self.w = x + 1
-			self.h = y + 1
-			self.cursor_restore()
-			return
-		except:
-			if defaults:
-				self.w, self.h = defaults
-				return
-			raise RuntimeError("No suitable method to get terminal size.")
+    def clear_line(self):
+        return self.adaptor.clear_line()
 
-	def getch(self):
-		"""Get a single character from stdin in cbreak mode.
-		Blocks until the user performs an input. Only works if cbreak is on.
-		"""
-		if not self._cbreak:
-			raise ValueError("Must be in cbreak mode.")
-		return read_escape(self.in_file)
+    def clear_to_end(self):
+        return self.adaptor.clear_to_end()
 
-	def getch_raw(self):
-		"""Get a single character from stdin in cbreak mode.
-		Does not decode escape sequences.
-		Blocks until the user performs an input. Only works if cbreak is on.
-		"""
-		if not self._cbreak:
-			raise ValueError("Must be in cbreak mode.")
-		return self.in_file.read(1)
+    def reset(self):
+        return self.adaptor.reset()
 
-	def write(self, *things):
-		"""Write an arbitrary number of things to the buffer.
-		"""
-		self._buffer += map(lambda i: str(i), things)
-		return self
+    def cursor_set_visible(self, visible=True):
+        return self.adaptor.cursor_set_visible(visible)
 
-	def writeln(self, *things):
-		"""Writes an arbitrary number of things to the buffer with a newline.
-		"""
-		self.write(*things, "\n")
-		return self
+    def cursor_get_pos(self):
+        return self.adaptor.cursor_get_pos()
 
-	def flush(self):
-		"""Flush the buffer to the terminal.
-		"""
-		print("".join(self._buffer), end="", file=self.out_file, flush=True)
-		self._buffer = []
+    def cursor_save(self):
+        return self.adaptor.cursor_save()
 
-	def print(self, *things, sep="", end="\n"):
-		"""Acts like Python's print(). Forces a flush.
-		"""
-		self.write(sep.join(things), end).flush()
+    def cursor_restore(self):
+        return self.adaptor.cursor_restore()
 
-	def clear(self):
-		"""Clear the screen.
-		"""
-		self.write(CSI, "2J")
-		return self
+    def cursor_to(self, x, y):
+        return self.adaptor.cursor_to(x, y)
 
-	def fill_box(self, x, y, w, h, ch):
-		"""Fills a region of the terminal
-		"""
-		for i in range(max(int(y), 0), min(self.w, int(y+h))):
-			self.cursor_to(max(int(x), 0), i)
-			self.write(ch * min(min(w, w+x), self.w - x))
-		return self
+    def cursor_to_x(self, x):
+        return self.adaptor.cursor_to_x(x)
 
-	def clear_box(self, x, y, w, h):
-		return self.fill_box(x, y, w, h, " ")
+    def cursor_move(self, x, y):
+        return self.adaptor.cursor_move(x, y)
 
-	def clear_line(self):
-		"""Clear the line and move cursor to start
-		"""
-		self.cursor_to_start()
-		self.write(CSI, "2K")
-		return self
+    def cursor_to_start(self):
+        return self.cursor_to_start()
+    
+    def fill_box(self, x, y, w, h, ch):
+        """Fills a region of the terminal
+        """
+        for i in range(max(int(y), 0), min(self.w, int(y+h))):
+            self.adaptor.cursor_to(max(int(x), 0), i)
+            self.adaptor.write(ch * min(min(w, w+x), self.w - x))
+        return self
 
-	def clear_to_end(self):
-		"""Clear to the end of the line
-		"""
-		self.write(CSI, "0K")
-		return self
+    def clear_box(self, x, y, w, h):
+        return self.fill_box(x, y, w, h, " ")
 
-	def reset(self):
-		"""Clean up the terminal state before exiting.
-		"""
-		self.cursor_to(0, 0)
-		self.clear()
-		self.set_cbreak(False)
-		self.mouse_disable_experimental()
-		self.write(ESC, "c") # reset state
-		self.flush()
+    def style(self, *styles):
+        """Apply styles, which may be a Color or something with .ansi()
+        Accepts a Color or a Style.
+        """
+        return self.adaptor.style(*styles)
 
-	def cursor_set_visible(self, visible=True):
-		"""Change the cursor visibility.
-		visible may be True or False.
-		"""
-		self.write(CSI, "?25", "h" if visible else "l")
-		self._cursor_visible = visible
-		return self
-
-	def cursor_get_pos(self):
-		"""Retrieve the current (x,y) cursor position.
-		This is slow, so avoid using when unnecessary.
-		"""
-		old_status = self._cbreak
-		if not self._cbreak:
-			self.set_cbreak(True)
-		termios.tcflush(self.in_file, termios.TCIOFLUSH)
-		
-		# write DSR (device status report)
-		self.write(CSI, "6n")
-		self.flush()
-
-		# read result from stdin
-		buf = []
-		while self.getch_raw() != "[": # skip start
-			pass
-		c = ""
-		while c != "R": # read until end
-			buf.append(c)
-			c = self.getch_raw()
-		parts = "".join(buf).split(";")
-
-		# restore old cbreak
-		if not old_status:
-			self.set_cbreak(False)
-
-		return (int(parts[1]) - 1, int(parts[0]) - 1)
-
-	def cursor_save(self):
-		"""Save the cursor position
-		"""
-		self.write(CSI, "s")
-		return self
-
-	def cursor_restore(self):
-		"""Restore the cursor position
-		"""
-		self.write(CSI, "u")
-		return self
-
-	def cursor_to(self, x, y):
-		"""Move the cursor to an absolute position.
-		"""
-		self.write(CSI, int(y+1), ";", int(x+1), "H")
-		return self
-
-	def cursor_to_x(self, x):
-		"""Move the cursor to a given column on the same line.
-		"""
-		self.write(CSI, int(x+1), "G")
-		return self
-
-	def cursor_move(self, x, y):
-		"""Move the cursor by a given amount.
-		"""
-		if x < 0:
-			self.write(CSI, abs(int(x)), "D")
-		elif x > 0:
-			self.write(CSI, int(x), "C")
-		if y < 0:
-			self.write(CSI, abs(int(x)), "A")
-		elif y > 0:
-			self.write(CSI, int(x), "B")
-		return self
-
-	def cursor_to_start(self):
-		"""Move the cursor to the start of the line.
-		"""
-		self.write(CSI, "1G")
-		return self
-
-	def style(self, *styles):
-		"""Apply styles, which may be a Color or something with .ansi()
-		Accepts a Color or a Style.
-		"""
-		for style in styles:
-			if isinstance(style, Color):
-				self.write(style.to_mode(self._color_mode))
-			else:
-				self.write(style.ansi())
-		return self
-
-	def style_reset(self):
-		"""Reset style.
-		"""
-		self.write(CSI, "0m")
-		return self
+    def style_reset(self):
+        """Reset style.
+        """
+        return self.adaptor.style()

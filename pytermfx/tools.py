@@ -1,4 +1,4 @@
-from pytermfx.pytermfx import *
+from pytermfx.constants import *
 from pytermfx import Terminal, NamedColor
 import asyncio
 import sys

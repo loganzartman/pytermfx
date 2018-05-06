@@ -1,4 +1,4 @@
-from pytermfx.pytermfx import *
+from pytermfx.constants import *
 from enum import Enum
 import colorsys
 import math

@@ -1,4 +1,4 @@
-from pytermfx.pytermfx import *
+from pytermfx.constants import *
 
 sgr_styles = {
 	"reset": 0,
@@ -41,13 +41,13 @@ class NoneStyle(Style):
 	def __init__(self):
 		pass
 
-	def add():
+	def add(self):
 		return NotImplemented
 
-	def remove():
+	def remove(self):
 		return NotImplemented
 
-	def clear():
+	def clear(self):
 		return NotImplemented
 
 	def ansi(self):

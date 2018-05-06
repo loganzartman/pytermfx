@@ -1,4 +1,4 @@
-from pytermfx.pytermfx import *
+from pytermfx.constants import *
 from pytermfx.keys import *
 
 """Supports escape sequences for keyboard input.
