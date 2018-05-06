@@ -10,7 +10,7 @@ t.set_cbreak(True)
 t.cursor_set_visible(False)
 t.mouse_enable_experimental("move")
 radius = 5 
-flow = 0.15
+flow = 0.5
 buffer = None
 damage = None
 mouse = None
@@ -71,5 +71,5 @@ def on_input(c):
 
 draw_buffer()
 t.flush()
-app = Screensaver(t, 300, update = update, on_input = on_input)
+app = Screensaver(t, 30, update = update, on_input = on_input)
 app.start()

@@ -2,7 +2,7 @@ from pytermfx import Terminal, Color, NamedColor, Style
 from pytermfx.tools import Screensaver
 
 t = Terminal()
-MAX = 20
+MAX = 100
 STEP = 2
 scale = 0.05
 off_x = 0
@@ -59,6 +59,7 @@ def on_input(char):
 		off_x += STEP * scale
 	elif char == "a":
 		off_x -= STEP * scale
+	app.update()
 
 app = Screensaver(t, 0, update = update, on_input = on_input)
 app.start()

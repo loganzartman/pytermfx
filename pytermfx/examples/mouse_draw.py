@@ -16,12 +16,13 @@ try:
 		if isinstance(c, MouseMove):
 			if c.left:
 				t.cursor_to(c.x, c.y)
-				t.style(Color.hsl(clock(), 1, 0.7))
-				t.write("█").flush()
+				t.style(Color.hsl(clock(), 1, 0.7).bg())
+				t.write(" ").flush()
 			elif c.right:
+				t.style_reset()
 				t.clear_box(c.x - 3, c.y - 1, 6, 3).flush()
 		elif c == "c":
-			t.clear().flush()
+			t.style_reset().clear().flush()
 		elif c == "q":
 			break
 except KeyboardInterrupt:
