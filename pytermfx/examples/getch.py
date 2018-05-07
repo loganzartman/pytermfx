@@ -2,7 +2,7 @@ from pytermfx import Terminal
 
 t = Terminal()
 t.set_cbreak(True)
-t.mouse_enable_experimental("move")
+t.mouse_enable("move")
 
 try:
 	while True:

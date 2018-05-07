@@ -4,7 +4,7 @@ from time import clock
 
 t = Terminal()
 t.set_cbreak(True)
-t.mouse_enable_experimental("move")
+t.mouse_enable("move")
 t.cursor_set_visible(False)
 t.writeln("Left+drag to draw, Right+drag to erase.")
 t.writeln("Press C to clear, Q to quit.")

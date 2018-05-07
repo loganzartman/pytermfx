@@ -9,7 +9,7 @@ old_y = 0
 
 t = Terminal()
 t.set_cbreak(True)
-t.mouse_enable_experimental("move")
+t.mouse_enable("move")
 t.cursor_set_visible(False)
 t.clear().flush()
 

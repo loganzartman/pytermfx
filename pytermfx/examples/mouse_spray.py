@@ -8,7 +8,7 @@ t = Terminal()
 t.set_color_mode(ColorMode.MODE_256)
 t.set_cbreak(True)
 t.cursor_set_visible(False)
-t.mouse_enable_experimental("move")
+t.mouse_enable("move")
 radius = 5 
 flow = 0.5
 buffer = None
