@@ -1,5 +1,35 @@
-class BaseAdaptor:
+from pytermfx.adaptors.base import BaseAdaptor
+from ctypes import windll, Structure, c_short, c_ushort, byref
+
+k32 = windll.kernel32
+
+# structs from wincon.h
+class COORD(Structure):
+    _fields_ = [
+        ("X", c_short),
+        ("Y", c_short)
+    ]
+
+class SMALL_RECT(Structure):
+    _fields_ = [
+        ("Left", c_ushort),
+        ("Top", c_ushort),
+        ("Right", c_ushort),
+        ("Bottom", c_ushort)
+    ]
+
+class CONSOLE_SCREEN_BUFFER_INFO(Structure):
+    _fields_ = [
+        ("dwSize", COORD),
+        ("dwCursorPosition", COORD),
+        ("wAttributes", c_ushort),
+        ("srWindow", SMALL_RECT),
+        ("dwMaximumWindowSize", COORD)
+    ]
+
+class Win32Adaptor(BaseAdaptor):
     def __init__(self, input_file, output_file, resize_handler=lambda: None):
+        super().__init__(input_file, output_file, resize_handler)
         self.in_file = input_file
         self.out_file = output_file
         self.resize_handler = resize_handler
@@ -24,7 +54,11 @@ class BaseAdaptor:
         """Retrieve the dimensions of the terminal window.
         Raises an exception if no size detection method works.
         """
-        return NotImplemented
+        info = CONSOLE_SCREEN_BUFFER_INFO()
+        k32.GetConsoleScreenBufferInfo(self.out_file, byref(info))
+        w = info.srWindow.Right - info.srWindow.Left
+        h = info.srWindow.Bottom - info.srWindow.Top
+        return (w, h)
 
     def getch(self):
         """Get a single character from stdin in cbreak mode.
@@ -39,28 +73,24 @@ class BaseAdaptor:
         """
         return NotImplemented
 
-    def write(self, *things):
-        """Write an arbitrary number of things to the buffer.
-        """
-        self._buffer += map(lambda i: str(i), things)
-        return self
-
-    def writeln(self, *things):
-        """Writes an arbitrary number of things to the buffer with a newline.
-        """
-        self.write(*things, "\n")
-        return self
-
     def flush(self):
         """Flush the buffer to the terminal.
         """
-        print("".join(self._buffer), end="", file=self.out_file, flush=True)
+        msg = "".join(self._buffer)
+        written = c_short()
+        k32.WriteConsoleW(
+            self.out_file,
+            msg,
+            c_short(len(msg)),
+            byref(written),
+            None
+        )
         self._buffer = []
 
     def clear(self):
         """Clear the screen.
         """
-        return NotImplemented
+        pass # TODO: replace no-op
 
     def clear_line(self):
         """Clear the line and move cursor to start
@@ -102,7 +132,10 @@ class BaseAdaptor:
     def cursor_to(self, x, y):
         """Move the cursor to an absolute position.
         """
-        return NotImplemented
+        self.flush()
+        pos = COORD(X=x, Y=y)
+        k32.SetConsoleCursorPosition(self.out_file, pos)
+        return self
 
     def cursor_to_x(self, x):
         """Move the cursor to a given column on the same line.

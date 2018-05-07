@@ -1,21 +1,22 @@
 from pytermfx.color import Color, ColorMode
-from pytermfx.adaptors.base import BaseAdaptor
-from pytermfx.adaptors.vt100 import VT100Adaptor
+from pytermfx.adaptors import BaseAdaptor, PlatformAdaptor, STDIN, STDOUT
 import sys
 
 class Terminal:
-    def __init__(self, input_file=sys.stdin, output_file=sys.stdout):
+    def __init__(self, input_file = STDIN, output_file = STDOUT):
         args = {
             "input_file": input_file,
             "output_file": output_file, 
             "resize_handler": self.update_size}
+        
         try:
-            self.adaptor = VT100Adaptor(**args)
+            self.adaptor = PlatformAdaptor(**args)
         except:
             self.adaptor = BaseAdaptor(**args)
+
         self._resize_handlers = [self.update_size]
         self.update_size()
-    
+
     def add_resize_handler(self, func):
         """Adds a handler for terminal resize.
         """
