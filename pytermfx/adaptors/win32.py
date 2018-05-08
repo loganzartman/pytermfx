@@ -100,7 +100,7 @@ class Win10Adaptor(VT100Adaptor):
         kernel32.GetConsoleScreenBufferInfo(self.out_file, byref(info))
         w = info.srWindow.Right - info.srWindow.Left
         h = info.srWindow.Bottom - info.srWindow.Top
-        return (w, h)
+        return (w+1, h+1)
 
     def getch(self):
         """Get a single character from stdin in cbreak mode.
@@ -138,6 +138,18 @@ class Win10Adaptor(VT100Adaptor):
             None
         )
         self._buffer = []
+
+    def clear(self):
+        w, h = self.get_size()
+        written = DWORD()
+        kernel32.FillConsoleOutputCharacterW(
+            self.out_file,
+            WCHAR(" "),
+            w * h,
+            COORD(X=0, Y=0),
+            byref(written)
+        )
+        self.cursor_to(0, 0)
 
     def reset(self):
         """Clean up the terminal state before exiting.
