@@ -31,6 +31,7 @@ class TerminalApp:
 		except KeyboardInterrupt:
 			pass
 		finally:
+			self.terminal.clear()
 			self.terminal.reset()
 
 class Screensaver(TerminalApp):
