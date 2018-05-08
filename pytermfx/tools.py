@@ -21,14 +21,13 @@ class TerminalApp:
 
 	def start(self):
 		async def readfunc():
-			c = self.terminal.getch()
-			self.on_input(c)
-			asyncio.ensure_future(readfunc())
-		asyncio.ensure_future(readfunc())
+			while True:
+				c = await self.eloop.run_in_executor(None, self.terminal.getch)
+				self.on_input(c)
 		self.terminal._handle_resize()
 		try:
 			self.update()
-			self.eloop.run_forever()
+			self.eloop.run_until_complete(readfunc())
 		except KeyboardInterrupt:
 			pass
 		finally:
