@@ -6,15 +6,15 @@ Be forewarned: this is messy and not portable.
 It supports most of the keys I have on my keyboard.
 """
 
-def parse_mouse(file):
-	btns = ord(file.read(1)) - 32
+def parse_mouse(read_func):
+	btns = ord(read_func()) - 32
 	left = btns & 0b11 == 0b00
 	right = btns & 0b11 == 0b10
 	moved = btns & 0b100000
 	down = not moved and (left or right)
 	up = not moved and not (left or right)
-	x = ord(file.read(1)) - 33
-	y = ord(file.read(1)) - 33
+	x = ord(read_func()) - 33
+	y = ord(read_func()) - 33
 	return MouseMove(x, y, left=left, right=right, down=down, up=up, btns=btns)
 
 KEY_MAP = {}
@@ -95,8 +95,8 @@ ESC_MAP = {
 }
 ESC_MAP[ESC] = MOD_ALT
 
-def read_escape(file):
-	first = file.read(1)
+def read_escape(read_func):
+	first = read_func()
 	if first != ESC:
 		if first in KEY_MAP:
 			return KEY_MAP[first]
@@ -104,7 +104,7 @@ def read_escape(file):
 
 	mod = MOD_NONE
 	skip_once = True
-	c = file.read(1)
+	c = read_func()
 	c_buffer = []
 	m = ESC_MAP
 
@@ -117,7 +117,7 @@ def read_escape(file):
 	# iterative case: escape sequence
 	while isinstance(m, dict):
 		if not skip_once:
-			c = file.read(1)
+			c = read_func()
 		else:
 			skip_once = False
 		c_buffer.append(c)
@@ -125,7 +125,7 @@ def read_escape(file):
 			break
 
 		if callable(m[c]):
-			return m[c](file)
+			return m[c](read_func)
 		if type(m[c]) == Key:
 			return m[c] + mod
 		elif type(m[c]) == Mod:

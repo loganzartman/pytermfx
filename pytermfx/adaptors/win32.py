@@ -2,6 +2,8 @@ from pytermfx.constants import *
 from pytermfx.color import Color, ColorMode
 from pytermfx.adaptors.base import BaseAdaptor
 from pytermfx.adaptors.vt100 import VT100Adaptor
+from pytermfx.escapes import read_escape
+from functools import partial
 from ctypes import windll, Structure, byref
 from ctypes import c_int, c_short, c_ushort, c_bool, c_wchar
 
@@ -104,7 +106,8 @@ class Win10Adaptor(VT100Adaptor):
         """Get a single character from stdin in cbreak mode.
         Blocks until the user performs an input. Only works if cbreak is on.
         """
-        return NotImplemented
+        read_func = partial(Win10Adaptor.getch_raw, self)
+        return read_escape(read_func)
 
     def getch_raw(self):
         """Get a single character from stdin in cbreak mode.
