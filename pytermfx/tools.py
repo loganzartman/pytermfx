@@ -20,10 +20,11 @@ class TerminalApp:
 		self.eloop = asyncio.get_event_loop()
 
 	def start(self):
-		def readfunc():
+		async def readfunc():
 			c = self.terminal.getch()
 			self.on_input(c)
-		self.eloop.add_reader(sys.stdin.fileno(), readfunc)
+			asyncio.ensure_future(readfunc())
+		asyncio.ensure_future(readfunc())
 		self.terminal._handle_resize()
 		try:
 			self.update()
