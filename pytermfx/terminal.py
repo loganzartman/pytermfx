@@ -76,7 +76,7 @@ class Terminal:
     def print(self, *things, sep="", end="\n"):
         """Acts like Python's print(). Forces a flush.
         """
-        return self.adaptor.write(sep.join(things), end).flush()
+        return self.adaptor.write(sep.join(str(t) for t in things), end).flush()
 
     def clear(self):
         """Clear the screen.
