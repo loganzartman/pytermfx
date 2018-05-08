@@ -4,6 +4,7 @@ class BaseAdaptor:
         self.out_file = output_file
         self.resize_handler = resize_handler
         self._buffer = []
+        self._cbreak = False
 
     def mouse_enable(self, mode):
         """Enable experimental mouse support.

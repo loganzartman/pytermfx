@@ -1,7 +1,29 @@
+from pytermfx.constants import *
+from pytermfx.color import Color, ColorMode
 from pytermfx.adaptors.base import BaseAdaptor
-from ctypes import windll, Structure, c_short, c_ushort, byref
+from pytermfx.adaptors.vt100 import VT100Adaptor
+from ctypes import windll, Structure, c_short, c_ushort, c_bool, byref
 
-k32 = windll.kernel32
+kernel32 = windll.kernel32
+
+# console input mode flags from wincon.h
+ENABLE_ECHO_INPUT = 0x0004
+ENABLE_LINE_INPUT = 0x0002
+ENABLE_EXTENDED_FLAGS = 0x0080
+ENABLE_INSERT_MODE = 0x0020
+ENABLE_PROCESSED_INPUT = 0x0001
+ENABLE_QUICK_EDIT_MODE = 0x0040
+ENABLE_VIRTUAL_TERMINAL_INPUT = 0x0200
+
+# console output mode flags
+ENABLE_PROCESSED_OUTPUT = 0x0001
+ENABLE_WRAP_AT_EOL_OUTPUT = 0x0002
+ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+
+# console mode masks
+WIN10_INPUT_CBREAK  = ENABLE_VIRTUAL_TERMINAL_INPUT | ENABLE_PROCESSED_INPUT
+WIN10_INPUT_DEFAULT = ENABLE_PROCESSED_INPUT | ENABLE_EXTENDED_FLAGS | ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE
+WIN10_OUTPUT = ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_PROCESSED_OUTPUT
 
 # structs from wincon.h
 class COORD(Structure):
@@ -27,35 +49,49 @@ class CONSOLE_SCREEN_BUFFER_INFO(Structure):
         ("dwMaximumWindowSize", COORD)
     ]
 
-class Win32Adaptor(BaseAdaptor):
+class CONSOLE_CURSOR_INFO(Structure):
+    _fields_ = [
+        ("dwSize", COORD),
+        ("bVisible", c_bool)
+    ]
+
+class Win10Adaptor(VT100Adaptor):
     def __init__(self, input_file, output_file, resize_handler=lambda: None):
         super().__init__(input_file, output_file, resize_handler)
         self.in_file = input_file
         self.out_file = output_file
         self.resize_handler = resize_handler
-        self._buffer = []
 
-    def mouse_enable(self, mode):
-        """Enable experimental mouse support.
-        """
-        return NotImplemented
+        # store initial console mode
+        self._old_output_mode = c_short()
+        kernel32.GetConsoleMode(self.out_file, byref(self._old_output_mode))
+        self._old_input_mode = c_short()
+        kernel32.GetConsoleMode(self.in_file, byref(self._old_input_mode))
 
-    def mouse_disable(self):
-        """Disable experimental mouse support.
-        """
-        return NotImplemented
+        # set console mode
+        kernel32.SetConsoleMode(self.out_file, c_short(WIN10_OUTPUT))
+        kernel32.SetConsoleMode(self.in_file, c_short(WIN10_INPUT_DEFAULT))
     
     def set_cbreak(self, cbreak):
         """Enable or disable cbreak mode.
         """
-        return NotImplemented
+        if self._cbreak == cbreak:
+            return self
+        
+        if cbreak:
+            kernel32.SetConsoleMode(self.in_file, c_short(WIN10_INPUT_CBREAK))
+            self._cbreak = True
+        else:
+            kernel32.SetConsoleMode(self.in_file, c_short(WIN10_INPUT_DEFAULT))
+            self._cbreak = False
+        return self
 
     def get_size(self, defaults=None):
         """Retrieve the dimensions of the terminal window.
         Raises an exception if no size detection method works.
         """
         info = CONSOLE_SCREEN_BUFFER_INFO()
-        k32.GetConsoleScreenBufferInfo(self.out_file, byref(info))
+        kernel32.GetConsoleScreenBufferInfo(self.out_file, byref(info))
         w = info.srWindow.Right - info.srWindow.Left
         h = info.srWindow.Bottom - info.srWindow.Top
         return (w, h)
@@ -78,7 +114,7 @@ class Win32Adaptor(BaseAdaptor):
         """
         msg = "".join(self._buffer)
         written = c_short()
-        k32.WriteConsoleW(
+        kernel32.WriteConsoleW(
             self.out_file,
             msg,
             c_short(len(msg)),
@@ -87,78 +123,40 @@ class Win32Adaptor(BaseAdaptor):
         )
         self._buffer = []
 
-    def clear(self):
-        """Clear the screen.
-        """
-        pass # TODO: replace no-op
-
-    def clear_line(self):
-        """Clear the line and move cursor to start
-        """
-        return NotImplemented
-
-    def clear_to_end(self):
-        """Clear to the end of the line
-        """
-        return NotImplemented
-
     def reset(self):
         """Clean up the terminal state before exiting.
         """
-        pass
-
-    def cursor_set_visible(self, visible=True):
-        """Change the cursor visibility.
-        visible may be True or False.
-        """
-        return NotImplemented
+        VT100Adaptor.reset(self)
+        kernel32.SetConsoleMode(self.out_file, self._old_output_mode)
+        kernel32.SetConsoleMode(self.in_file, self._old_input_mode)
 
     def cursor_get_pos(self):
         """Retrieve the current (x,y) cursor position.
         This is slow, so avoid using when unnecessary.
         """
-        return NotImplemented
-
-    def cursor_save(self):
-        """Save the cursor position
-        """
-        return NotImplemented
-
-    def cursor_restore(self):
-        """Restore the cursor position
-        """
-        return NotImplemented
+        self.flush()
+        info = CONSOLE_CURSOR_INFO()
+        kernel32.GetConsoleCursorInfo(self.out_file, byref(info))
+        return (info.dwSize.X, info.dwSize.Y)
 
     def cursor_to(self, x, y):
-        """Move the cursor to an absolute position.
-        """
         self.flush()
         pos = COORD(X=x, Y=y)
-        k32.SetConsoleCursorPosition(self.out_file, pos)
+        kernel32.SetConsoleCursorPosition(self.out_file, pos)
         return self
 
-    def cursor_to_x(self, x):
-        """Move the cursor to a given column on the same line.
-        """
-        return NotImplemented
+class WinNTAdaptor(Win10Adaptor):
+    def __init__(self, input_file, output_file, resize_handler=lambda: None):
+        super().__init__(input_file, output_file, resize_handler)
+        self.in_file = input_file
+        self.out_file = output_file
+        self.resize_handler = resize_handler
 
-    def cursor_move(self, x, y):
-        """Move the cursor by a given amount.
-        """
-        return NotImplemented
+        # store initial console mode
+        self._old_mode = c_short()
+        kernel32.GetConsoleMode(self.out_file, byref(self._old_mode))
 
-    def cursor_to_start(self):
-        """Move the cursor to the start of the line.
-        """
-        return NotImplemented
-
-    def style(self, *styles):
-        """Apply styles, which may be a Color or something with .ansi()
-        Accepts a Color or a Style.
-        """
-        return NotImplemented
-
-    def style_reset(self):
-        """Reset style.
-        """
-        return NotImplemented
+        # set console mode
+        out_mode = c_short(ENABLE_PROCESSED_OUTPUT | 
+                           ENABLE_WRAP_AT_EOL_OUTPUT)
+        kernel32.SetConsoleMode(self.out_file, out_mode)
