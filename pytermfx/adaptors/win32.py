@@ -2,9 +2,13 @@ from pytermfx.constants import *
 from pytermfx.color import Color, ColorMode
 from pytermfx.adaptors.base import BaseAdaptor
 from pytermfx.adaptors.vt100 import VT100Adaptor
-from ctypes import windll, Structure, c_short, c_ushort, c_bool, byref
+from ctypes import windll, Structure, byref
+from ctypes import c_int, c_short, c_ushort, c_bool, c_wchar
 
 kernel32 = windll.kernel32
+WORD = c_short
+DWORD = c_int
+WCHAR = c_wchar
 
 # console input mode flags from wincon.h
 ENABLE_ECHO_INPUT = 0x0004
@@ -107,7 +111,16 @@ class Win10Adaptor(VT100Adaptor):
         Does not decode escape sequences.
         Blocks until the user performs an input. Only works if cbreak is on.
         """
-        return NotImplemented
+        ch = WCHAR()
+        len_read = DWORD()
+        kernel32.ReadConsoleW(
+            self.in_file,
+            byref(ch),
+            DWORD(1),
+            byref(len_read),
+            None
+        )
+        return ch.value
 
     def flush(self):
         """Flush the buffer to the terminal.
