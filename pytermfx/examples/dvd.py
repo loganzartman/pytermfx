@@ -1,10 +1,11 @@
 from pytermfx import Terminal, Color, Style
-from pytermfx.tools import Screensaver
+from pytermfx.tools import TerminalApp
 import time
 import random
 
 def main():
 	t = Terminal()
+	t.cursor_set_visible(False)
 
 	# the beautiful art
 	art = [
@@ -65,7 +66,10 @@ def main():
 		draw_art(t, art, pos[0], pos[1])
 		t.flush()
 
-	app = Screensaver(t, 60, update = update)
+	def on_input(c):
+		if c == "q":
+			app.stop()
+	app = TerminalApp(t, 60, update = update, on_input = on_input)
 	app.start()
 
 def draw_art(term, art, x, y):

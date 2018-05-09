@@ -1,7 +1,8 @@
 from pytermfx import Terminal, Color, NamedColor, Style
-from pytermfx.tools import Screensaver
+from pytermfx.tools import TerminalApp
 
 t = Terminal()
+t.cursor_set_visible(False)
 MAX = 100
 STEP = 2
 scale = 0.05
@@ -27,11 +28,11 @@ def update():
 	# draw mandelbrot
 	for y in range(t.h):
 		for x in range(t.w):
-			t.cursor_to(x, y)
 			cx = (x - t.w / 2) * scale
 			cy = (y - t.h / 2) * scale * 2
 			t.style(color(mandelbrot(cx + off_x, cy + off_y, MAX)))
 			t.write(" ")
+		t.cursor_to(0, y)
 
 	# draw info
 	t.style(Style("bold"))
@@ -42,8 +43,11 @@ def update():
 	t.flush()
 
 def on_input(char):
-	global scale, off_x, off_y
-	
+	global app, scale, off_x, off_y
+	if char == "q":
+		app.stop(lambda: t.clear())
+		return
+
 	# zoom
 	if char == "-":
 		scale *= 1.1
@@ -61,5 +65,5 @@ def on_input(char):
 		off_x -= STEP * scale
 	app.update()
 
-app = Screensaver(t, 0, update = update, on_input = on_input)
+app = TerminalApp(t, 0, update = update, on_input = on_input)
 app.start()

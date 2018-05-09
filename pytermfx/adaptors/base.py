@@ -48,13 +48,11 @@ class BaseAdaptor:
         """Write an arbitrary number of things to the buffer.
         """
         self._buffer += map(lambda i: str(i), things)
-        return self
 
     def writeln(self, *things):
         """Writes an arbitrary number of things to the buffer with a newline.
         """
         self.write(*things, "\n")
-        return self
 
     def flush(self):
         """Flush the buffer to the terminal.

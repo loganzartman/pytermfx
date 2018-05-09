@@ -44,7 +44,8 @@ class TerminalApp:
                 self.update()
                 delay = (1 / self.framerate) - (time.process_time() - t0)
                 time.sleep(max(0, delay))
-        self.create_thread(update_loop)
+        if (self.framerate > 0):
+            self.create_thread(update_loop)
 
         # startup
         self.terminal.clear()
@@ -72,6 +73,7 @@ class TerminalApp:
     def _cleanup(self):
         self.terminal.cursor_to(0, 0)
         self.terminal.clear()
+        self.terminal.flush()
         self.terminal.reset()
 
 def draw_progress(terminal, progress=0, label="", *, color=NamedColor("white"), 

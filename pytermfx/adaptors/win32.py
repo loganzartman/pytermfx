@@ -80,7 +80,7 @@ class Win10Adaptor(VT100Adaptor):
         """Enable or disable cbreak mode.
         """
         if self._cbreak == cbreak:
-            return self
+            return
         
         if cbreak:
             kernel32.SetConsoleMode(self.in_file, c_short(WIN10_INPUT_CBREAK))
@@ -88,7 +88,6 @@ class Win10Adaptor(VT100Adaptor):
         else:
             kernel32.SetConsoleMode(self.in_file, c_short(WIN10_INPUT_DEFAULT))
             self._cbreak = False
-        return self
 
     def get_size(self, defaults=None):
         """Retrieve the dimensions of the terminal window.
@@ -162,7 +161,6 @@ class Win10Adaptor(VT100Adaptor):
         self.flush()
         pos = COORD(X=x, Y=y)
         kernel32.SetConsoleCursorPosition(self.out_file, pos)
-        return self
 
 class WinNTAdaptor(Win10Adaptor):
     def __init__(self, input_file, output_file, resize_handler=lambda: None):

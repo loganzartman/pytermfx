@@ -1,5 +1,5 @@
 from pytermfx import Terminal, Color
-from pytermfx.tools import Screensaver
+from pytermfx.tools import TerminalApp
 from random import random, randint, choice
 from time import sleep
 
@@ -10,6 +10,7 @@ CHARS = list("║═╚╝╔╗")
 # CHARS = list("│─╰╯╭╮")
 
 t = Terminal()
+t.cursor_set_visible(False)
 i = MAX_STEPS
 pipes = []
 
@@ -102,7 +103,10 @@ def update():
 	t.flush()
 
 def main():
-	app = Screensaver(t, 60, update=update)
+	def on_input(c):
+		if c == "q":
+			app.stop()
+	app = TerminalApp(t, 60, update=update, on_input=on_input)
 	app.start()
 	
 main()

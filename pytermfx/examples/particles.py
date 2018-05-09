@@ -1,5 +1,5 @@
 from pytermfx import Terminal, Color, Style
-from pytermfx.tools import Screensaver
+from pytermfx.tools import TerminalApp
 from pytermfx.keys import MouseMove
 import random
 import math
@@ -10,6 +10,7 @@ mouse_px = 0
 mouse_py = 0
 particles = []
 t = Terminal()
+t.cursor_set_visible(False)
 t.set_cbreak(True)
 t.mouse_enable("move")
 t.style(Color.hex(0)).clear()
@@ -43,13 +44,13 @@ def update():
 		particles.append(Particle(mouse_px + dx * f, mouse_py + dy * f, vx, vy))
 
 	for i, p in enumerate(particles):
-		t.cursor_to(p.x, p.y)
+		t.cursor_to(int(p.x), int(p.y))
 		t.style(Style.none).write(" ")
 		p.update()
 		if p.x < 0 or p.y < 0 or p.x >= t.w or p.y >= t.h:
 			particles.remove(p)
 		else:
-			t.cursor_to(p.x, p.y)
+			t.cursor_to(int(p.x), int(p.y))
 			t.style(Color.hsl(i/len(particles), 1.0, 0.5)).write("@")
 	t.flush()
 
@@ -58,9 +59,11 @@ def update():
 
 def on_input(c):
 	global mouse_x, mouse_y
+	if c == "q":
+		app.stop()
 	if isinstance(c, MouseMove):
 		mouse_x = c.x
 		mouse_y = c.y
 
-app = Screensaver(t, 30, update = update, on_input = on_input)
+app = TerminalApp(t, 30, update = update, on_input = on_input)
 app.start()

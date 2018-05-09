@@ -25,6 +25,7 @@ def main():
 	except KeyboardInterrupt:
 		pass
 	finally:
+		t.clear()
 		t.reset()
 
 def update():

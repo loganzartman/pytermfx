@@ -61,60 +61,74 @@ class Terminal:
     def write(self, *things):
         """Write an arbitrary number of things to the buffer.
         """
-        return self.adaptor.write(*things)
+        self.adaptor.write(*things)
+        return self
 
     def writeln(self, *things):
         """Writes an arbitrary number of things to the buffer with a newline.
         """
-        return self.adaptor.writeln(*things)
+        self.adaptor.writeln(*things)
+        return self
 
     def flush(self):
         """Flush the buffer to the terminal.
         """
-        return self.adaptor.flush()
+        self.adaptor.flush()
 
     def print(self, *things, sep="", end="\n"):
         """Acts like Python's print(). Forces a flush.
         """
-        return self.adaptor.write(sep.join(str(t) for t in things), end).flush()
+        self.adaptor.write(sep.join(str(t) for t in things), end)
+        self.adaptor.flush()
+        return self
 
     def clear(self):
         """Clear the screen.
         """
-        return self.adaptor.clear() 
+        self.adaptor.clear()
+        return self 
 
     def clear_line(self):
-        return self.adaptor.clear_line()
+        self.adaptor.clear_line()
+        return self
 
     def clear_to_end(self):
-        return self.adaptor.clear_to_end()
+        self.adaptor.clear_to_end()
+        return self
 
     def reset(self):
-        return self.adaptor.reset()
+        self.adaptor.reset()
 
     def cursor_set_visible(self, visible=True):
-        return self.adaptor.cursor_set_visible(visible)
+        self.adaptor.cursor_set_visible(visible)
+        return self
 
     def cursor_get_pos(self):
         return self.adaptor.cursor_get_pos()
 
     def cursor_save(self):
-        return self.adaptor.cursor_save()
+        self.adaptor.cursor_save()
+        return self
 
     def cursor_restore(self):
-        return self.adaptor.cursor_restore()
+        self.adaptor.cursor_restore()
+        return self
 
     def cursor_to(self, x, y):
-        return self.adaptor.cursor_to(x, y)
+        self.adaptor.cursor_to(x, y)
+        return self
 
     def cursor_to_x(self, x):
-        return self.adaptor.cursor_to_x(x)
+        self.adaptor.cursor_to_x(x)
+        return self
 
     def cursor_move(self, x, y):
-        return self.adaptor.cursor_move(x, y)
+        self.adaptor.cursor_move(x, y)
+        return self
 
     def cursor_to_start(self):
-        return self.cursor_to_start()
+        self.adaptor.cursor_to_start()
+        return self
     
     def fill_box(self, x, y, w, h, ch):
         """Fills a region of the terminal
@@ -125,15 +139,18 @@ class Terminal:
         return self
 
     def clear_box(self, x, y, w, h):
-        return self.fill_box(x, y, w, h, " ")
+        self.fill_box(x, y, w, h, " ")
+        return self
 
     def style(self, *styles):
         """Apply styles, which may be a Color or something with .ansi()
         Accepts a Color or a Style.
         """
-        return self.adaptor.style(*styles)
+        self.adaptor.style(*styles)
+        return self
 
     def style_reset(self):
         """Reset style.
         """
-        return self.adaptor.style()
+        self.adaptor.style_reset()
+        return self

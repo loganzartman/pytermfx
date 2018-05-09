@@ -64,16 +64,13 @@ class VT100Adaptor(BaseAdaptor):
         """Clear the screen.
         """
         self.write(CSI, "2J")
-        return self
 
     def clear_line(self):
         self.cursor_to_start()
         self.write(CSI, "2K")
-        return self
 
     def clear_to_end(self):
         self.write(CSI, "0K")
-        return self
 
     def reset(self):
         self.flush()
@@ -87,23 +84,18 @@ class VT100Adaptor(BaseAdaptor):
     def cursor_set_visible(self, visible=True):
         self.write(CSI, "?25", "h" if visible else "l")
         self._cursor_visible = visible
-        return self
 
     def cursor_save(self):
         self.write(CSI, "s")
-        return self
 
     def cursor_restore(self):
         self.write(CSI, "u")
-        return self
 
     def cursor_to(self, x, y):
         self.write(CSI, int(y+1), ";", int(x+1), "H")
-        return self
 
     def cursor_to_x(self, x):
         self.write(CSI, int(x+1), "G")
-        return self
 
     def cursor_move(self, x, y):
         if x < 0:
@@ -114,11 +106,9 @@ class VT100Adaptor(BaseAdaptor):
             self.write(CSI, abs(int(x)), "A")
         elif y > 0:
             self.write(CSI, int(x), "B")
-        return self
 
     def cursor_to_start(self):
         self.write(CSI, "1G")
-        return self
 
     def style(self, *styles):
         """Apply styles, which may be a Color or something with .ansi()
@@ -129,10 +119,8 @@ class VT100Adaptor(BaseAdaptor):
                 self.write(style.to_mode(self._color_mode))
             else:
                 self.write(style.ansi())
-        return self
 
     def style_reset(self):
         """Reset style.
         """
         self.write(CSI, "0m")
-        return self
