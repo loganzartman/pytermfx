@@ -141,6 +141,9 @@ class Terminal:
     def clear_box(self, x, y, w, h):
         self.fill_box(x, y, w, h, " ")
         return self
+    
+    def set_color_mode(self, mode):
+        self.adaptor.set_color_mode(mode)
 
     def style(self, *styles):
         """Apply styles, which may be a Color or something with .ansi()

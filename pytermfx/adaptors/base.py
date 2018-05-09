@@ -121,6 +121,13 @@ class BaseAdaptor:
         """Move the cursor to the start of the line.
         """
         return NotImplemented
+    
+    def set_color_mode(self, mode):
+        """Change the color mode of the terminal.
+        The color mode determines what kind of ANSI sequences are used to
+        set colors. See ColorMode for more details.
+        """
+        return NotImplemented
 
     def style(self, *styles):
         """Apply styles, which may be a Color or something with .ansi()

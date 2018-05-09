@@ -1,6 +1,6 @@
 from pytermfx import Terminal, Color, ColorMode
 from pytermfx.keys import MouseMove
-from pytermfx.tools import Screensaver
+from pytermfx.tools import TerminalApp
 from math import sqrt, sin
 from random import random
 
@@ -61,15 +61,18 @@ def update():
 		t.flush()
 
 def on_input(c):
-	global mouse, t
+	global mouse, t, app
 	if isinstance(c, MouseMove):
 		mouse = c
 	if c == "c":
 		resize()
 		draw_buffer()
 		t.flush()
+	if c == "q":
+		app.stop()
+		return
 
 draw_buffer()
 t.flush()
-app = Screensaver(t, 30, update = update, on_input = on_input)
+app = TerminalApp(t, 30, update = update, on_input = on_input)
 app.start()

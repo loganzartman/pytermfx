@@ -65,6 +65,7 @@ class Win10Adaptor(VT100Adaptor):
         self.in_file = input_file
         self.out_file = output_file
         self.resize_handler = resize_handler
+        self.set_color_mode(ColorMode.MODE_RGB)
 
         # store initial console mode
         self._old_output_mode = c_short()
@@ -168,6 +169,7 @@ class WinNTAdaptor(Win10Adaptor):
         self.in_file = input_file
         self.out_file = output_file
         self.resize_handler = resize_handler
+        self.set_color_mode(ColorMode.MODE_16)
 
         # store initial console mode
         self._old_mode = c_short()
