@@ -1,7 +1,6 @@
 from pytermfx.constants import *
 from pytermfx import Terminal, NamedColor
-from contextlib import suppress
-import asyncio
+from threading import Thread
 import sys
 import time
 
@@ -12,77 +11,68 @@ class TerminalApp:
     The client may pass an on_input(char) parameter to accept a keyboard input.
     """
 
-    def __init__(self, terminal, **kwargs):
+    def __init__(self, terminal, framerate = 0, **kwargs):
         terminal.set_cbreak(True)
         self.terminal = terminal
+        self.framerate = framerate
         self.on_input = kwargs["on_input"] if "on_input" in kwargs else lambda char: None
         self.update = kwargs["update"] if "update" in kwargs else lambda: None
         self.terminal.add_resize_handler(self.update)
-        self.eloop = asyncio.get_event_loop()
+        self._running = False
+        self._threads = []
+
+    def create_thread(self, func):
+        t = Thread(target = func)
+        self._threads.append(t)
+        return t
 
     def start(self):
-        async def readfunc():
-            while True:
-                c = await self.eloop.run_in_executor(None, self.terminal.getch)
+        if self._running:
+            raise RuntimeError("TerminalApp already running!")
+
+        # create input reader thread
+        def readfunc():
+            while self._running:
+                c = self.terminal.getch()
                 self.on_input(c)
-        self.terminal._handle_resize()
-        try:
-            self.update()
-            self.eloop.run_until_complete(readfunc())
-        except KeyboardInterrupt:
-            pass
-        except RuntimeError:
-            pass
-        finally:
-            self.terminal.cursor_to(0, 0)
-            self.terminal.clear()
-            self.terminal.reset()
+        readthread = self.create_thread(readfunc)
 
-class Screensaver(TerminalApp):
-    """An extension of TerminalApp that updates at a fixed rate.
-    See TerminalApp for more information.
-    """
+        # create update thread
+        def update_loop():
+            while self._running:
+                t0 = time.process_time()
+                self.update()
+                delay = (1 / self.framerate) - (time.process_time() - t0)
+                time.sleep(max(0, delay))
+        self.create_thread(update_loop)
 
-    def __init__(self, terminal, framerate, **kwargs):
-        super().__init__(terminal, **kwargs)
-        self.framerate = framerate
-        self.quit_char = kwargs["quit_char"] if "quit_char" in kwargs else "q"
-        
-        # add exit functionality
-        old_input_func = self.on_input
-        def input_func(char): 
-            self.check_quit(char)
-            old_input_func(char)
-        self.on_input = input_func
-
-        # set up terminal
-        self.terminal.cursor_set_visible(False)
+        # startup
         self.terminal.clear()
         self.terminal.flush()
+        self.terminal._handle_resize()
+        self.update()
+        self._running = True
 
-        # start event loop
-        if framerate > 0:
-            asyncio.ensure_future(self.redraw_loop(self.update))
-
-    async def redraw_loop(self, update_func):
-        while True:
-            t0 = time.clock()
-            update_func()
-            delay = (1 / self.framerate) - (time.clock() - t0)
-            await asyncio.sleep(max(0, delay))
-
-    def stop(self):
-        # Cancel all running tasks
-        pending = asyncio.Task.all_tasks()
-        for task in pending:
-            task.cancel()
-            # Cancelled task raises asyncio.CancelledError that we can suppress:
-            with suppress(asyncio.CancelledError):
-                self.eloop.run_until_complete(task)
-
-    def check_quit(self, char):
-        if char == self.quit_char:
+        # run threads
+        try:
+            for t in self._threads:
+                t.start()
+            readthread.join()
+        except KeyboardInterrupt:
             self.stop()
+
+    def stop(self, before_cleanup = lambda: None):
+        if not self._running:
+            return
+        self._running = False
+        self._threads = []
+        before_cleanup()
+        self._cleanup()
+
+    def _cleanup(self):
+        self.terminal.cursor_to(0, 0)
+        self.terminal.clear()
+        self.terminal.reset()
 
 def draw_progress(terminal, progress=0, label="", *, color=NamedColor("white"), 
                   format="{0:.2f}%", left="[", right="]", fill="=", empty=" ",
@@ -121,3 +111,8 @@ def draw_vline(terminal, x, ch="║"):
         terminal.cursor_to(x, y)
         terminal.write(ch)
     terminal.flush()
+
+def print_hcenter(terminal, text, y):
+    x = max(0, (terminal.w - len(text)) // 2)
+    terminal.cursor_to(x, y)
+    terminal.print(text)
