@@ -76,12 +76,13 @@ class VT100Adaptor(BaseAdaptor):
         return self
 
     def reset(self):
+        self.flush()
         self.set_cbreak(False)
         self.mouse_disable()
         self.style_reset()
         self.cursor_set_visible(True)
-        # self.write(ESC, "c") # reset state
         self.flush()
+        # self.write(ESC, "c") # reset state
 
     def cursor_set_visible(self, visible=True):
         self.write(CSI, "?25", "h" if visible else "l")

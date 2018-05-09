@@ -1,3 +1,6 @@
+from functools import partial
+from pytermfx.escapes import read_escape
+
 class BaseAdaptor:
     def __init__(self, input_file, output_file, resize_handler=lambda: None):
         self.in_file = input_file
@@ -31,7 +34,8 @@ class BaseAdaptor:
         """Get a single character from stdin in cbreak mode.
         Blocks until the user performs an input. Only works if cbreak is on.
         """
-        return NotImplemented
+        read_func = partial(type(self).getch_raw, self)
+        return read_escape(read_func)
 
     def getch_raw(self):
         """Get a single character from stdin in cbreak mode.

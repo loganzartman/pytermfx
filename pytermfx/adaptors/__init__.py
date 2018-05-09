@@ -4,7 +4,7 @@ try:
     import sys
     STDIN = sys.stdin
     STDOUT = sys.stdout
-    from pytermfx.adaptors.unix import UnixVT100Adaptor as PlatformAdaptor
+    from pytermfx.adaptors.unix import UnixAdaptor as PlatformAdaptor
 except:
     try:
         from ctypes import windll

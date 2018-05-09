@@ -1,12 +1,10 @@
 from pytermfx.constants import *
 from pytermfx.adaptors.vt100 import VT100Adaptor
-from pytermfx.escapes import read_escape
-from functools import partial
 import signal
 import termios
 import tty
 
-class UnixVT100Adaptor(VT100Adaptor):
+class UnixAdaptor(VT100Adaptor):
     def __init__(self, input_file, output_file, resize_handler=lambda: None):
         super().__init__(input_file, output_file, resize_handler)
 
@@ -21,13 +19,6 @@ class UnixVT100Adaptor(VT100Adaptor):
         if cbreak:
             tty.setcbreak(self.in_file.fileno())
         self._cbreak = cbreak
-    
-    def getch(self):
-        """Get a single character from stdin in cbreak mode.
-        Blocks until the user performs an input. Only works if cbreak is on.
-        """
-        read_func = partial(UnixVT100Adaptor.getch_raw, self)
-        return read_escape(read_func)
     
     def getch_raw(self):
         """Get a single character from stdin in cbreak mode.
