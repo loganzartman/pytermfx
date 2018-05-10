@@ -15,7 +15,7 @@ def parse_mouse(read_func):
 	up = not moved and not (left or right)
 	x = ord(read_func()) - 33
 	y = ord(read_func()) - 33
-	return MouseMove(x, y, left=left, right=right, down=down, up=up, btns=btns)
+	return MouseEvent(x, y, left=left, right=right, down=down, up=up, btns=btns)
 
 KEY_MAP = {}
 KEY_MAP.update({chr(i + 1): Key(chr(97 + i), ctrl=True) for i in range(26)})
@@ -100,7 +100,7 @@ def read_escape(read_func):
 	if first != ESC:
 		if first in KEY_MAP:
 			return KEY_MAP[first]
-		return Key(first)
+		return Key(first, printable=True)
 
 	mod = MOD_NONE
 	skip_once = True
@@ -112,7 +112,7 @@ def read_escape(read_func):
 	if c not in m:
 		if c in KEY_MAP:
 			return KEY_MAP[c] + MOD_ALT
-		return Key(c) + MOD_ALT
+		return Key(c, printable=True) + MOD_ALT
 
 	# iterative case: escape sequence
 	while isinstance(m, dict):

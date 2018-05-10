@@ -1,5 +1,5 @@
 from pytermfx import Terminal, Color, Style
-from pytermfx.keys import MouseMove
+from pytermfx.keys import MouseEvent
 from time import clock
 
 BASE_SIZE = 4
@@ -22,7 +22,7 @@ try:
 		t.flush()
 
 		c = t.getch()
-		if isinstance(c, MouseMove):
+		if isinstance(c, MouseEvent):
 			if c.down:
 				size = BASE_SIZE * 3
 			elif c.left or c.right:

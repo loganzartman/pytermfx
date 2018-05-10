@@ -1,6 +1,6 @@
 from pytermfx import Terminal, Color, Style
 from pytermfx.tools import TerminalApp
-from pytermfx.keys import MouseMove
+from pytermfx.keys import MouseEvent
 import random
 import math
 
@@ -61,7 +61,7 @@ def on_input(c):
 	global mouse_x, mouse_y
 	if c == "q":
 		app.stop()
-	if isinstance(c, MouseMove):
+	if isinstance(c, MouseEvent):
 		mouse_x = c.x
 		mouse_y = c.y
 

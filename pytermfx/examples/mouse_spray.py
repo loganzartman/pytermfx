@@ -1,5 +1,5 @@
 from pytermfx import Terminal, Color, ColorMode
-from pytermfx.keys import MouseMove
+from pytermfx.keys import MouseEvent
 from pytermfx.tools import TerminalApp
 from math import sqrt, sin
 from random import random
@@ -62,7 +62,7 @@ def update():
 
 def on_input(c):
 	global mouse, t, app
-	if isinstance(c, MouseMove):
+	if isinstance(c, MouseEvent):
 		mouse = c
 	if c == "c":
 		resize()

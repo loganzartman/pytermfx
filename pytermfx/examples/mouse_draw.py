@@ -1,5 +1,5 @@
 from pytermfx import Terminal, Color
-from pytermfx.keys import MouseMove
+from pytermfx.keys import MouseEvent
 from time import clock
 
 t = Terminal()
@@ -13,7 +13,7 @@ t.flush()
 try:
 	while True:
 		c = t.getch()
-		if isinstance(c, MouseMove):
+		if isinstance(c, MouseEvent):
 			if c.left:
 				t.cursor_to(c.x, c.y)
 				t.style(Color.hsl(clock(), 1, 0.7).bg())

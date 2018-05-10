@@ -1,11 +1,18 @@
 from numbers import Number
 
 class Key:
-	def __init__(self, key, ctrl=False, alt=False, shift=False):
-		self.key = key.lower()
+	def __init__(self, key, ctrl=False, alt=False, shift=False, printable=False):
+		if isinstance(key, int):
+			self.key = chr(key)
+		else:
+			self.key = key.lower()
 		self.ctrl = ctrl
 		self.alt = alt
-		self.shift = shift or key.isupper()
+		self.shift = shift or self.key.isupper()
+		self.printable = printable
+	
+	def is_printable(self):
+		return self.printable
 
 	def __hash__(self):
 		return hash((self.key, self.ctrl, self.alt, self.shift))
@@ -54,6 +61,7 @@ KEY_RIGHT = Key("right")
 KEY_LEFT = Key("left")
 
 KEY_TAB = Key("\t")
+KEY_BACKSPACE = Key(8)
 
 KEY_INS = Key("insert")
 KEY_DEL = Key("delete")
@@ -90,7 +98,7 @@ MOD_CTRL = Mod(ctrl=True)
 MOD_ALT = Mod(alt=True)
 MOD_SHIFT = Mod(shift=True)
 
-class MouseMove:
+class MouseEvent:
 	def __init__(self, x, y, *, left = False, right = False, down = False, up = False, btns = 0):
 		self.x = x
 		self.y = y
@@ -99,6 +107,9 @@ class MouseMove:
 		self.down = down
 		self.up = up
 		self.btns = btns
+	
+	def is_printable(self):
+		return False
 
 	def str_long(self):
 		btn_states = zip((self.down, self.up, self.left, self.right), ("down", "up", "left", "right"))
@@ -106,4 +117,4 @@ class MouseMove:
 		return "".join(("mouse ", btn_string, " @ ", str(self.x), ",", str(self.y)))
 
 	def clone(self):
-		return MouseMove(self.x, self.y)
+		return MouseEvent(self.x, self.y)
