@@ -3,7 +3,7 @@ from pytermfx.color import Color, ColorMode
 from pytermfx.adaptors.base import BaseAdaptor
 from pytermfx.adaptors.vt100 import VT100Adaptor
 from ctypes import windll, Structure, byref
-from ctypes import c_int, c_short, c_ushort, c_bool, c_wchar
+from ctypes import c_int, c_short, c_ushort, c_bool, c_wchar, c_uint
 
 kernel32 = windll.kernel32
 WORD = c_short
@@ -72,10 +72,12 @@ class Win10Adaptor(VT100Adaptor):
         kernel32.GetConsoleMode(self.out_file, byref(self._old_output_mode))
         self._old_input_mode = c_short()
         kernel32.GetConsoleMode(self.in_file, byref(self._old_input_mode))
+        self._old_code_page = kernel32.GetConsoleOutputCP()
 
         # set console mode
         kernel32.SetConsoleMode(self.out_file, c_short(WIN10_OUTPUT))
         kernel32.SetConsoleMode(self.in_file, c_short(WIN10_INPUT_DEFAULT))
+        kernel32.SetConsoleOutputCP(65001) # unicode code page
     
     def set_cbreak(self, cbreak):
         """Enable or disable cbreak mode.
@@ -148,6 +150,7 @@ class Win10Adaptor(VT100Adaptor):
         VT100Adaptor.reset(self)
         kernel32.SetConsoleMode(self.out_file, self._old_output_mode)
         kernel32.SetConsoleMode(self.in_file, self._old_input_mode)
+        kernel32.SetConsoleOutputCP(self._old_code_page)
 
     def cursor_get_pos(self):
         """Retrieve the current (x,y) cursor position.
