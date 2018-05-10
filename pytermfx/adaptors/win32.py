@@ -134,12 +134,22 @@ class Win10Adaptor(VT100Adaptor):
 
     def clear(self):
         w, h = self.get_size()
+        n_length = w * h
+        write_coord = COORD(X=0, Y=0)
+
         written = DWORD()
+        kernel32.FillConsoleOutputAttribute(
+            self.out_file,
+            c_short(),
+            n_length,
+            write_coord,
+            byref(written)
+        )
         kernel32.FillConsoleOutputCharacterW(
             self.out_file,
             WCHAR(" "),
-            w * h,
-            COORD(X=0, Y=0),
+            n_length,
+            write_coord,
             byref(written)
         )
         self.cursor_to(0, 0)
