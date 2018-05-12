@@ -34,14 +34,22 @@ class TerminalApp:
         def readfunc():
             while self._running:
                 c = self.terminal.getch()
-                self.on_input(c)
+                try:
+                    self.on_input(c)
+                except:
+                    self.stop()
+                    raise
         readthread = self.create_thread(readfunc)
 
         # create update thread
         def update_loop():
             while self._running:
                 t0 = time.process_time()
-                self.update()
+                try:
+                    self.update()
+                except:
+                    self.stop()
+                    raise
                 delay = (1 / self.framerate) - (time.process_time() - t0)
                 time.sleep(max(0, delay))
         if (self.framerate > 0):

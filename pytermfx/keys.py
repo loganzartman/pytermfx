@@ -3,13 +3,15 @@ from numbers import Number
 class Key:
 	def __init__(self, key, ctrl=False, alt=False, shift=False, printable=False):
 		if isinstance(key, int):
-			self.key = chr(key)
-		else:
-			self.key = key.lower()
+			key = chr(key)
+		self.key = key.lower()
 		self.ctrl = ctrl
 		self.alt = alt
-		self.shift = shift or self.key.isupper()
+		self.shift = shift or key.isupper()
 		self.printable = printable
+	
+	def char(self):
+		return self.key.upper() if self.shift else self.key
 	
 	def is_printable(self):
 		return self.printable

@@ -1,8 +1,11 @@
 from pytermfx.constants import *
 from pytermfx.adaptors.vt100 import VT100Adaptor
+from threading import RLock
 import signal
 import termios
 import tty
+
+size_lock = RLock()
 
 class UnixAdaptor(VT100Adaptor):
     def __init__(self, input_file, output_file, resize_handler=lambda: None):
@@ -28,6 +31,25 @@ class UnixAdaptor(VT100Adaptor):
         if not self._cbreak:
             raise ValueError("Must be in cbreak mode.")
         return self.in_file.read(1)
+    
+    def get_size(self, defaults=None):
+        """Retrieve the dimensions of the terminal window.
+        Raises an exception if no size detection method works.
+        """
+        global size_lock
+        size_lock.acquire()
+        try:
+            self.cursor_save()
+            self.cursor_to(9999, 9999)
+            x, y = self.cursor_get_pos()
+            w = x + 1
+            h = y + 1
+            self.cursor_restore()
+            return (w, h)
+        except:
+            raise RuntimeError("Failed to get terminal size.")
+        finally:
+            size_lock.release()
     
     def cursor_get_pos(self):
         old_status = self._cbreak

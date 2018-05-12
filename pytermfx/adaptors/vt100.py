@@ -44,21 +44,6 @@ class VT100Adaptor(BaseAdaptor):
         if not isinstance(mode, ColorMode):
             raise ValueError("mode must be a ColorMode.")
         self._color_mode = mode
-    
-    def get_size(self, defaults=None):
-        """Retrieve the dimensions of the terminal window.
-        Raises an exception if no size detection method works.
-        """
-        try:
-            self.cursor_save()
-            self.cursor_to(9999, 9999)
-            x, y = self.cursor_get_pos()
-            w = x + 1
-            h = y + 1
-            self.cursor_restore()
-            return (w, h)
-        except:
-            raise RuntimeError("Failed to get terminal size.")
 
     def clear(self):
         """Clear the screen.
