@@ -126,3 +126,34 @@ def print_hcenter(terminal, text, y):
     x = max(0, (terminal.w - len(text)) // 2)
     terminal.cursor_to(x, y)
     terminal.print(text)
+
+def read_line(terminal):
+    old_status = terminal.adaptor._cbreak
+    terminal.set_cbreak(True)
+    terminal.cursor_save()
+
+    buffer = []
+    def redraw():
+        terminal.cursor_restore()
+        for c in buffer:
+            terminal.write(c)
+        terminal.flush()
+
+    ch = None
+    while True:
+        ch = terminal.getch()
+        if ch == chr(13) or ch == chr(10):
+            break
+        elif ch == chr(127) or ch == chr(8):
+            if len(buffer) > 0:
+                terminal.cursor_move(-1, 0)
+                terminal.write(" ")
+                buffer.pop()
+        elif ch.is_printable():
+            buffer.append(ch)
+        redraw()
+    
+    terminal.set_cbreak(old_status)
+    terminal.writeln()
+    time.sleep(0.1)
+    return "".join(str(k) for k in buffer)
