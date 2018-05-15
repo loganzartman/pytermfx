@@ -3,6 +3,7 @@ from pytermfx.color import Color, ColorMode
 from pytermfx.adaptors.base import BaseAdaptor
 from pytermfx.adaptors.input import InputAdaptor
 from pytermfx.adaptors.vt100 import VT100Adaptor
+from threading import Timer
 from ctypes import windll, Structure, byref
 from ctypes import c_int, c_short, c_ushort, c_bool, c_wchar, c_uint
 
@@ -65,7 +66,6 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
         super().__init__(input_file, output_file, resize_handler, read_func = self.readch)
         self.in_file = input_file
         self.out_file = output_file
-        self.resize_handler = resize_handler
         self.set_color_mode(ColorMode.MODE_RGB)
 
         # store initial console mode
@@ -79,6 +79,12 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
         kernel32.SetConsoleMode(self.out_file, c_short(WIN10_OUTPUT))
         kernel32.SetConsoleMode(self.in_file, c_short(WIN10_INPUT_DEFAULT))
         kernel32.SetConsoleOutputCP(65001) # unicode code page
+
+        # poll for resize
+        def handler():
+            resize_handler()
+            Timer(0.2, handler).start()
+        handler()
     
     def set_cbreak(self, cbreak):
         """Enable or disable cbreak mode.
