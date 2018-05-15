@@ -23,9 +23,15 @@ class InputDaemon:
         self.collector.start()        
     
     def read(self):
+        # start up daemons lazily
         if not self.running:
             self._start()
+        
         self.input_event.wait() # block until some input is buffered
+        if len(self.group_queue) == 0:
+            return ""
+
+        # poll input queue
         group = self.group_queue.pop(0)
         if len(self.group_queue) == 0:
             self.input_event.clear()

@@ -1,5 +1,6 @@
 from functools import partial
 from pytermfx.escapes import parse_escape
+import os
 
 class BaseAdaptor:
     def __init__(self, input_file, output_file, resize_handler=lambda: None):
@@ -61,7 +62,7 @@ class BaseAdaptor:
     def writeln(self, *things):
         """Writes an arbitrary number of things to the buffer with a newline.
         """
-        self.write(*things, "\n")
+        self.write(*things, os.linesep)
 
     def flush(self):
         """Flush the buffer to the terminal.
