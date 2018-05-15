@@ -2,20 +2,29 @@ from pytermfx.constants import *
 from pytermfx.adaptors.base import BaseAdaptor
 from pytermfx.adaptors.input import InputAdaptor
 from pytermfx.adaptors.vt100 import VT100Adaptor
-from threading import RLock
+from threading import Lock
 import signal
 import termios
 import tty
+import time
 import re
-
-size_lock = RLock()
 
 class UnixAdaptor(InputAdaptor, VT100Adaptor):
     def __init__(self, input_file, output_file, resize_handler=lambda: None):
         super().__init__(input_file, output_file, resize_handler, read_func = self.readch)
 
         self._original_attr = termios.tcgetattr(self.in_file)
-        signal.signal(signal.SIGWINCH, lambda s,f: self.resize_handler())
+
+        size_lock = Lock()
+        def handler(s=None, f=None):
+            # force resize handler to not be concurrent
+            time.sleep(0.01)
+            size_lock.acquire()
+            try:
+                resize_handler()
+            finally:
+                size_lock.release()
+        signal.signal(signal.SIGWINCH, handler)
     
     def set_cbreak(self, cbreak):
         """Enable or disable cbreak mode.
@@ -35,9 +44,7 @@ class UnixAdaptor(InputAdaptor, VT100Adaptor):
         """Retrieve the dimensions of the terminal window.
         Raises an exception if no size detection method works.
         """
-        global size_lock
-        size_lock.acquire()
-        try:
+        def f():
             self.cursor_save()
             self.cursor_to(9999, 9999)
             x, y = self.cursor_get_pos()
@@ -45,10 +52,13 @@ class UnixAdaptor(InputAdaptor, VT100Adaptor):
             h = y + 1
             self.cursor_restore()
             return (w, h)
-        except:
-            raise RuntimeError("Failed to get terminal size.")
-        finally:
-            size_lock.release()
+        tries = 0
+        while tries < 3:
+            try:
+                return f()
+            except:
+                pass
+        raise RuntimeError("Failed to get terminal size.")
     
     def cursor_get_pos(self):
         old_status = self._cbreak
@@ -63,5 +73,7 @@ class UnixAdaptor(InputAdaptor, VT100Adaptor):
         # read result from stdin
         status = self.getch_raw()
         match = re.match(r"\x1b\[(\d+);(\d+)R", status)
+        if not match:
+            raise RuntimeError("Failed to parse size response: " + status)
 
-        return (int(match.group(1)) - 1, int(match.group(2)) - 1)
+        return (int(match.group(2)) - 1, int(match.group(1)) - 1)

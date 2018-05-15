@@ -7,7 +7,7 @@ class Terminal:
         args = {
             "input_file": input_file,
             "output_file": output_file, 
-            "resize_handler": self.update_size}
+            "resize_handler": self._handle_resize}
         
         try:
             self.adaptor = PlatformAdaptor(**args)
@@ -50,7 +50,7 @@ class Terminal:
             if defaults is not None:
                 self.w, self.h = defaults
             raise
-    
+
     def set_cbreak(self, cbreak=True):
         return self.adaptor.set_cbreak(cbreak)
 

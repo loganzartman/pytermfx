@@ -11,6 +11,7 @@ CHARS = list("║═╚╝╔╗")
 
 t = Terminal()
 t.cursor_set_visible(False)
+t.add_resize_handler(lambda: t.clear().flush())
 i = MAX_STEPS
 pipes = []
 
