@@ -5,8 +5,9 @@ t.set_cbreak(True)
 
 try:
 	while True:
-		c = t.getch_raw()
-		t.writeln(ord(c)).flush()
+		s = t.getch_raw()
+		codes = [ord(c) for c in s]
+		t.print(*codes, sep=", ")
 except KeyboardInterrupt:
 	pass
 finally:

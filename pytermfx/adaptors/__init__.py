@@ -1,5 +1,6 @@
 import platform
 from pytermfx.adaptors.base import BaseAdaptor
+from pytermfx.adaptors.input import InputAdaptor
 try:
     import sys
     STDIN = sys.stdin

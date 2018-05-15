@@ -1,5 +1,5 @@
 from functools import partial
-from pytermfx.escapes import read_escape
+from pytermfx.escapes import parse_escape
 
 class BaseAdaptor:
     def __init__(self, input_file, output_file, resize_handler=lambda: None):
@@ -8,6 +8,7 @@ class BaseAdaptor:
         self.resize_handler = resize_handler
         self._buffer = []
         self._cbreak = False
+        self._getch_buffer = []
 
     def mouse_enable(self, mode):
         """Enable experimental mouse support.
@@ -34,12 +35,20 @@ class BaseAdaptor:
         """Get a single character from stdin in cbreak mode.
         Blocks until the user performs an input. Only works if cbreak is on.
         """
-        read_func = partial(type(self).getch_raw, self)
-        return read_escape(read_func)
+        # read and buffer control sequences
+        while len(self._getch_buffer) == 0:
+            self._getch_buffer += parse_escape(self.getch_raw())
+        return self._getch_buffer.pop(0)
 
     def getch_raw(self):
-        """Get a single character from stdin in cbreak mode.
+        """Get a single character sequence from stdin in cbreak mode.
         Does not decode escape sequences.
+        Blocks until the user performs an input. Only works if cbreak is on.
+        """
+        return NotImplemented
+    
+    def readch(self):
+        """Get a single character from stdin in cbreak mode.
         Blocks until the user performs an input. Only works if cbreak is on.
         """
         return NotImplemented

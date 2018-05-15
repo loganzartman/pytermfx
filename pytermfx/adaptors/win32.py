@@ -1,6 +1,7 @@
 from pytermfx.constants import *
 from pytermfx.color import Color, ColorMode
 from pytermfx.adaptors.base import BaseAdaptor
+from pytermfx.adaptors.input import InputAdaptor
 from pytermfx.adaptors.vt100 import VT100Adaptor
 from ctypes import windll, Structure, byref
 from ctypes import c_int, c_short, c_ushort, c_bool, c_wchar, c_uint
@@ -59,9 +60,9 @@ class CONSOLE_CURSOR_INFO(Structure):
         ("bVisible", c_bool)
     ]
 
-class Win10Adaptor(VT100Adaptor):
+class Win10Adaptor(InputAdaptor, VT100Adaptor):
     def __init__(self, input_file, output_file, resize_handler=lambda: None):
-        super().__init__(input_file, output_file, resize_handler)
+        super().__init__(input_file, output_file, resize_handler, read_func = self.readch)
         self.in_file = input_file
         self.out_file = output_file
         self.resize_handler = resize_handler
@@ -102,11 +103,7 @@ class Win10Adaptor(VT100Adaptor):
         h = info.srWindow.Bottom - info.srWindow.Top
         return (w+1, h+1)
 
-    def getch_raw(self):
-        """Get a single character from stdin in cbreak mode.
-        Does not decode escape sequences.
-        Blocks until the user performs an input. Only works if cbreak is on.
-        """
+    def readch(self):
         ch = WCHAR()
         len_read = DWORD()
         kernel32.ReadConsoleW(

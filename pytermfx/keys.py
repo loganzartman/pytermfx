@@ -65,6 +65,7 @@ KEY_LEFT = Key("left")
 KEY_TAB = Key("\t")
 KEY_BACKSPACE = Key(8)
 
+KEY_ESC = Key("escape")
 KEY_INS = Key("insert")
 KEY_DEL = Key("delete")
 KEY_HOME = Key("home")

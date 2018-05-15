@@ -1,15 +1,18 @@
 from pytermfx.constants import *
+from pytermfx.adaptors.base import BaseAdaptor
+from pytermfx.adaptors.input import InputAdaptor
 from pytermfx.adaptors.vt100 import VT100Adaptor
 from threading import RLock
 import signal
 import termios
 import tty
+import re
 
 size_lock = RLock()
 
-class UnixAdaptor(VT100Adaptor):
+class UnixAdaptor(InputAdaptor, VT100Adaptor):
     def __init__(self, input_file, output_file, resize_handler=lambda: None):
-        super().__init__(input_file, output_file, resize_handler)
+        super().__init__(input_file, output_file, resize_handler, read_func = self.readch)
 
         self._original_attr = termios.tcgetattr(self.in_file)
         signal.signal(signal.SIGWINCH, lambda s,f: self.resize_handler())
@@ -23,11 +26,7 @@ class UnixAdaptor(VT100Adaptor):
             tty.setcbreak(self.in_file.fileno())
         self._cbreak = cbreak
     
-    def getch_raw(self):
-        """Get a single character from stdin in cbreak mode.
-        Does not decode escape sequences.
-        Blocks until the user performs an input. Only works if cbreak is on.
-        """
+    def readch(self):
         if not self._cbreak:
             raise ValueError("Must be in cbreak mode.")
         return self.in_file.read(1)
@@ -62,17 +61,7 @@ class UnixAdaptor(VT100Adaptor):
         self.flush()
 
         # read result from stdin
-        buf = []
-        while self.getch_raw() != "[": # skip start
-            pass
-        c = ""
-        while c != "R": # read until end
-            buf.append(c)
-            c = self.getch_raw()
-        parts = "".join(buf).split(";")
+        status = self.getch_raw()
+        match = re.match(r"\x1b\[(\d+);(\d+)R", status)
 
-        # restore old cbreak
-        if not old_status:
-            self.set_cbreak(False)
-
-        return (int(parts[1]) - 1, int(parts[0]) - 1)
+        return (int(match.group(1)) - 1, int(match.group(2)) - 1)

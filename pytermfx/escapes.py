@@ -6,131 +6,125 @@ Be forewarned: this is messy and not portable.
 It supports most of the keys I have on my keyboard.
 """
 
-def parse_mouse(read_func):
-	btns = ord(read_func()) - 32
-	left = btns & 0b11 == 0b00
-	right = btns & 0b11 == 0b10
-	moved = btns & 0b100000
-	down = not moved and (left or right)
-	up = not moved and not (left or right)
-	x = ord(read_func()) - 33
-	y = ord(read_func()) - 33
-	return MouseEvent(x, y, left=left, right=right, down=down, up=up, btns=btns)
+
+class UnknownEscape(Exception):
+    pass
+
+
+def parse_mouse(seq):
+    if len(seq) < 3:
+        raise UnknownEscape("Malformed mouse sequence: {}".format(seq))
+    btns = ord(seq[0]) - 32
+    left = btns & 0b11 == 0b00
+    right = btns & 0b11 == 0b10
+    moved = btns & 0b100000
+    down = not moved and (left or right)
+    up = not moved and not (left or right)
+    x = ord(seq[1]) - 33
+    y = ord(seq[2]) - 33
+    return 3, MouseEvent(x, y, left=left, right=right, down=down, up=up, btns=btns)
+
 
 KEY_MAP = {}
 KEY_MAP.update({chr(i + 1): Key(chr(97 + i), ctrl=True) for i in range(26)})
-del KEY_MAP[chr(9)] # unfortunately ctrl+i is the same as tab and we have no other way
-                    # to recognize this.
-del KEY_MAP[chr(10)] # fix enter key
+del KEY_MAP[chr(9)]   # fix tab key
+del KEY_MAP[chr(10)]  # fix enter key
 
-ESC_MAP = {
-	"[": {
-		"M": parse_mouse,
-		"A": KEY_UP,
-		"B": KEY_DOWN,
-		"C": KEY_RIGHT,
-		"D": KEY_LEFT,
-		"a": KEY_UP + MOD_SHIFT,
-		"b": KEY_DOWN + MOD_SHIFT,
-		"c": KEY_RIGHT + MOD_SHIFT,
-		"d": KEY_LEFT + MOD_SHIFT,
-		"Z": KEY_TAB + MOD_SHIFT,
-		"1": {
-			"1": {"~": KEY_F1, "^": KEY_F1 + MOD_CTRL},
-			"2": {"~": KEY_F2, "^": KEY_F2 + MOD_CTRL},
-			"3": {"~": KEY_F3, "^": KEY_F3 + MOD_CTRL},
-			"4": {"~": KEY_F4, "^": KEY_F4 + MOD_CTRL},
-			"5": {"~": KEY_F5, "^": KEY_F5 + MOD_CTRL},
-			"7": {"~": KEY_F6, "^": KEY_F6 + MOD_CTRL},
-			"8": {"~": KEY_F7, "^": KEY_F7 + MOD_CTRL},
-			"9": {"~": KEY_F8, "^": KEY_F8 + MOD_CTRL}
-		},
-		"2": {
-			"~": KEY_INS,
-			"$": KEY_INS + MOD_SHIFT,
-			"^": KEY_INS + MOD_CTRL,
-			"@": KEY_INS + MOD_CTRL + MOD_SHIFT,
-			"0": {"~": KEY_F9, "^": KEY_F9 + MOD_CTRL},
-			"1": {"~": KEY_F10, "^": KEY_F10 + MOD_CTRL},
-			"3": {"~": KEY_F11, "^": KEY_F11 + MOD_CTRL},
-			"4": {"~": KEY_F12, "^": KEY_F12 + MOD_CTRL}
-		},
-		"3": {
-			"~": KEY_DEL, 
-			"$": KEY_DEL + MOD_SHIFT,
-			"^": KEY_DEL + MOD_CTRL,
-			"@": KEY_DEL + MOD_CTRL + MOD_SHIFT,
-		},
-		"7": {
-			"~": KEY_HOME,
-			"$": KEY_HOME + MOD_SHIFT,
-			"^": KEY_HOME + MOD_CTRL,
-			"@": KEY_HOME + MOD_CTRL + MOD_SHIFT,
-		},
-		"8": {
-			"~": KEY_END,
-			"$": KEY_END + MOD_SHIFT,
-			"^": KEY_END + MOD_CTRL,
-			"@": KEY_END + MOD_CTRL + MOD_SHIFT,
-		},
-		"5": {
-			"~": KEY_PGUP,
-			"$": KEY_PGUP + MOD_SHIFT,
-			"^": KEY_PGUP + MOD_CTRL,
-			"@": KEY_PGUP + MOD_CTRL + MOD_SHIFT,
-		},
-		"6": {
-			"~": KEY_PGDN,
-			"$": KEY_PGDN + MOD_SHIFT,
-			"^": KEY_PGDN + MOD_CTRL,
-			"@": KEY_PGDN + MOD_CTRL + MOD_SHIFT,
-		}
-	},
-	"O": {
-		"a": KEY_UP + MOD_CTRL,
-		"b": KEY_DOWN + MOD_CTRL,
-		"c": KEY_RIGHT + MOD_CTRL,
-		"d": KEY_LEFT + MOD_CTRL,
-	}
-}
-ESC_MAP[ESC] = MOD_ALT
+SEQ_LIST = []  # list of (sequence, key) tuples
 
-def read_escape(read_func):
-	first = read_func()
-	if first != ESC:
-		if first in KEY_MAP:
-			return KEY_MAP[first]
-		return Key(first, printable=True)
 
-	mod = MOD_NONE
-	skip_once = True
-	c = read_func()
-	c_buffer = []
-	m = ESC_MAP
+def register_seq(seq, key):
+    """Register an escape sequence and corresponding Key
+    """
+    SEQ_LIST.append((seq, key))
 
-	# special case alt+alpha
-	if c not in m:
-		if c in KEY_MAP:
-			return KEY_MAP[c] + MOD_ALT
-		return Key(c, printable=True) + MOD_ALT
 
-	# iterative case: escape sequence
-	while isinstance(m, dict):
-		if not skip_once:
-			c = read_func()
-		else:
-			skip_once = False
-		c_buffer.append(c)
-		if c not in m:
-			break
+def register_seq_mods(seq, key):
+    """Register an escape sequence and corresponding Key.
+    Include modifier keys.
+    """
+    register_seq(seq + "~", key)
+    register_seq(seq + "$", key + MOD_SHIFT)
+    register_seq(seq + "^", key + MOD_CTRL)
+    register_seq(seq + "@", key + MOD_CTRL + MOD_SHIFT)
 
-		if callable(m[c]):
-			return m[c](read_func)
-		if type(m[c]) == Key:
-			return m[c] + mod
-		elif type(m[c]) == Mod:
-			mod += m[c]
-		else:
-			m = m[c]
 
-	raise ValueError("Unsupported escape sequence: " + "".join(c_buffer))
+# Misc
+register_seq("[M", parse_mouse)
+register_seq("[Z", KEY_TAB + MOD_SHIFT)
+register_seq("", KEY_ESC)
+
+# Arrow keys
+register_seq("[A", KEY_UP)
+register_seq("[B", KEY_DOWN)
+register_seq("[C", KEY_RIGHT)
+register_seq("[D", KEY_LEFT)
+register_seq("[a", KEY_UP + MOD_SHIFT)
+register_seq("[b", KEY_DOWN + MOD_SHIFT)
+register_seq("[c", KEY_RIGHT + MOD_SHIFT)
+register_seq("[d", KEY_LEFT + MOD_SHIFT)
+register_seq("Oa", KEY_UP + MOD_CTRL)
+register_seq("Ob", KEY_DOWN + MOD_CTRL)
+register_seq("Oc", KEY_RIGHT + MOD_CTRL)
+register_seq("Od", KEY_LEFT + MOD_CTRL)
+
+# Function keys
+register_seq_mods("[11", KEY_F1)
+register_seq_mods("[12", KEY_F2)
+register_seq_mods("[13", KEY_F3)
+register_seq_mods("[14", KEY_F4)
+register_seq_mods("[15", KEY_F5)
+register_seq_mods("[17", KEY_F6)
+register_seq_mods("[18", KEY_F7)
+register_seq_mods("[19", KEY_F8)
+register_seq_mods("[20", KEY_F9)
+register_seq_mods("[21", KEY_F10)
+register_seq_mods("[23", KEY_F11)
+register_seq_mods("[24", KEY_F12)
+
+# Navigation keys
+register_seq_mods("[2", KEY_INS)
+register_seq_mods("[3", KEY_DEL)
+register_seq_mods("[5", KEY_PGUP)
+register_seq_mods("[6", KEY_PGDN)
+register_seq_mods("[7", KEY_HOME)
+register_seq_mods("[8", KEY_END)
+
+
+def parse_escape(seq, allow_unknown_escapes = True):
+    """Parses an escape sequence.
+    """
+    seq_key = sorted(SEQ_LIST, key=lambda tup: len(tup[0]), reverse=True)
+    try:
+        while len(seq) > 0:
+            # oh look: an ASCII (unicode) character
+            first = seq[0]
+            if first != ESC:
+                if first in KEY_MAP:
+                    yield KEY_MAP[first]
+                yield Key(first, printable=True)
+                seq = seq[1:]
+                continue
+            
+            # an escape sequence
+            seq = seq[1:] # strip ESC
+            for candidate_seq, val in seq_key:
+                if seq.startswith(candidate_seq):
+                    seq = seq[len(candidate_seq):]
+                    if isinstance(val, Key):
+                        yield val
+                    elif callable(val):
+                        n_remove, result = val(seq)
+                        seq = seq[n_remove:]
+                        yield result
+                    break
+            else:
+                raise UnknownEscape("Unknown sequence: {}".format(seq))
+    except UnknownEscape:
+        if allow_unknown_escapes:
+            # unrecognized sequence; just dump out raw values
+            # anything that checks .is_printable() can ignore these
+            for c in seq:
+                yield Key(c)
+        else:
+            raise
