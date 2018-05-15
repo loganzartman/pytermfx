@@ -26,6 +26,19 @@ class Terminal:
         for h in self._resize_handlers:
             h()
     
+    def managed(self):
+        class TermManager:
+            def __init__(self, term):
+                self.term = term
+            def __enter__(self):
+                pass
+            def __exit__(self, exc_type, exc_value, traceback):
+                self.term.reset()
+                if exc_type is type(KeyboardInterrupt):
+                    return True
+                return False
+        return TermManager(self)
+    
     def update_size(self, defaults=None):
         """Retrieve and store the dimensions of the terminal window.
         Sets self.w and self.h with current data if possible.
@@ -36,8 +49,7 @@ class Terminal:
         except:
             if defaults is not None:
                 self.w, self.h = defaults
-            else:
-                raise
+            raise
     
     def set_cbreak(self, cbreak=True):
         return self.adaptor.set_cbreak(cbreak)
