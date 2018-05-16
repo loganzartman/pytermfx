@@ -1,6 +1,5 @@
 from pytermfx.constants import *
 from pytermfx import Terminal, NamedColor
-from pytermfx.keys import KEY_BACKSPACE, KEY_TAB, KEY_ENTER
 from threading import Thread
 import sys
 import time
@@ -152,14 +151,14 @@ def read_line(terminal, update=lambda s: terminal.write(s),
     ch = None
     while True:
         ch = terminal.getch()
-        if ch == KEY_ENTER:
+        if ch == "enter":
             break
-        elif ch == KEY_BACKSPACE:
+        elif ch == "backspace":
             if len(buffer) > 0:
                 terminal.cursor_move(-1, 0)
                 terminal.write(" ")
                 buffer.pop()
-        elif ch == KEY_TAB:
+        elif ch == "tab":
             word = stringify().split(" ")[-1]
             candidate = autocomplete(word)
             if candidate is not None:

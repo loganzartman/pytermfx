@@ -7,7 +7,7 @@ t.mouse_enable("move")
 try:
 	while True:
 		c = t.getch()
-		t.writeln(c.str_long()).flush()
+		t.writeln(repr(c)).flush()
 except KeyboardInterrupt:
 	pass
 finally:

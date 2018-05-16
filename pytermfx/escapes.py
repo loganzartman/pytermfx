@@ -6,6 +6,8 @@ Be forewarned: this is messy and not portable.
 It supports most of the keys I have on my keyboard.
 """
 
+KEY_MAP = {}
+SEQ_LIST = []  # list of (sequence, key) tuples
 
 class UnknownEscape(Exception):
     pass
@@ -24,14 +26,57 @@ def parse_mouse(seq):
     y = ord(seq[2]) - 33
     return 3, MouseEvent(x, y, left=left, right=right, down=down, up=up, btns=btns)
 
-
-KEY_MAP = {}
-KEY_MAP.update({chr(i + 1): Key(chr(97 + i), ctrl=True) for i in range(26)})
-del KEY_MAP[chr(9)]   # fix tab key
-del KEY_MAP[chr(10)]  # fix enter key
-
-SEQ_LIST = []  # list of (sequence, key) tuples
-
+def parse_escape(seq, allow_unknown_escapes = True):
+    """Parses an escape sequence.
+    """
+    seq_key = sorted(SEQ_LIST, key=lambda tup: len(tup[0]), reverse=True)
+    try:
+        while len(seq) > 0:
+            # oh look: an ASCII (unicode) character
+            first = seq[0]
+            if first != ESC:
+                if first in KEY_MAP:
+                    yield KEY_MAP[first]
+                else:
+                    yield Key(first)
+                seq = seq[1:]
+                continue
+            
+            # special case for alt+key
+            # does not currently support all alt+key combos
+            if len(seq) == 2:
+                # note that this will fail to detect alt+key for simultaneous
+                # keypresses, but I don't think we can solve this.
+                key = seq[1]
+                if ord(key) < 127:
+                    if key in KEY_MAP:
+                        yield KEY_MAP[key] + MOD_ALT
+                    else:
+                        yield Key(key, alt=True)
+                    break
+            
+            # an escape sequence
+            seq = seq[1:] # strip ESC
+            for candidate_seq, val in seq_key:
+                if seq.startswith(candidate_seq):
+                    seq = seq[len(candidate_seq):]
+                    if isinstance(val, Key):
+                        yield val
+                    elif callable(val):
+                        n_remove, result = val(seq)
+                        seq = seq[n_remove:]
+                        yield result
+                    break
+            else:
+                raise UnknownEscape("Unknown sequence: {}".format(seq))
+    except UnknownEscape:
+        if allow_unknown_escapes:
+            # unrecognized sequence; just dump out raw values
+            # anything that checks .is_printable() can ignore these
+            for c in seq:
+                yield Key(c, printable=False)
+        else:
+            raise
 
 def register_seq(*seq, val):
     """Register an escape sequence and corresponding Key
@@ -50,7 +95,15 @@ def register_seq_mods(*seq, val):
     register_seq(*add_each(seq, "^"), val = val + MOD_CTRL)
     register_seq(*add_each(seq, "@"), val = val + MOD_CTRL + MOD_SHIFT)
 
+# Build key map
+KEY_MAP.update({chr(i + 1): Key(chr(97 + i), ctrl=True) for i in range(26)})
+KEY_MAP["\t"] = KEY_TAB
+KEY_MAP[chr(8)] = KEY_BACKSPACE
+KEY_MAP[chr(127)] = KEY_BACKSPACE
+KEY_MAP[chr(10)] = KEY_ENTER
+KEY_MAP[chr(13)] = KEY_ENTER
 
+# Register escape sequences
 # Misc
 register_seq("[M", val = parse_mouse)
 register_seq("[Z", val = KEY_TAB + MOD_SHIFT)
@@ -97,55 +150,3 @@ register_seq("[H", val = KEY_PGUP)
 register_seq("[F", val = KEY_PGDN)
 register_seq_mods("[7", val = KEY_HOME)
 register_seq_mods("[8", val = KEY_END)
-
-
-def parse_escape(seq, allow_unknown_escapes = True):
-    """Parses an escape sequence.
-    """
-    seq_key = sorted(SEQ_LIST, key=lambda tup: len(tup[0]), reverse=True)
-    try:
-        while len(seq) > 0:
-            # oh look: an ASCII (unicode) character
-            first = seq[0]
-            if first != ESC:
-                if first in KEY_MAP:
-                    yield KEY_MAP[first]
-                else:
-                    yield Key(first, printable=True)
-                seq = seq[1:]
-                continue
-            
-            # special case for alt+key
-            if len(seq) == 2:
-                # note that this will fail to detect alt+key for simultaneous
-                # keypresses, but I don't think we can solve this.
-                key = seq[1]
-                if ord(key) < 127:
-                    if key in KEY_MAP:
-                        yield KEY_MAP[key] + MOD_ALT
-                    else:
-                        yield Key(key, alt=True, printable=True)
-                    break
-            
-            # an escape sequence
-            seq = seq[1:] # strip ESC
-            for candidate_seq, val in seq_key:
-                if seq.startswith(candidate_seq):
-                    seq = seq[len(candidate_seq):]
-                    if isinstance(val, Key):
-                        yield val
-                    elif callable(val):
-                        n_remove, result = val(seq)
-                        seq = seq[n_remove:]
-                        yield result
-                    break
-            else:
-                raise UnknownEscape("Unknown sequence: {}".format(seq))
-    except UnknownEscape:
-        if allow_unknown_escapes:
-            # unrecognized sequence; just dump out raw values
-            # anything that checks .is_printable() can ignore these
-            for c in seq:
-                yield Key(c)
-        else:
-            raise
