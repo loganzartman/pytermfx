@@ -2,7 +2,7 @@ from setuptools import setup
 setup(
 	name = 'pytermfx',
 	packages = ['pytermfx'],
-	version = '0.4.1',
+	version = '0.4.2',
 	description = 'Terminal interaction and formatting for Python without curses',
 	author = 'Logan Zartman',
 	author_email = 'logan.zartman@utexas.edu',
