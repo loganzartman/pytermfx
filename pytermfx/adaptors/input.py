@@ -46,18 +46,24 @@ class InputDaemon:
     def group_main(self):
         buffer = []
         grouping = True
+
+        def dump_group():
+            if len(buffer) > 0:
+                group = "".join(buffer)
+                buffer.clear()
+                self.group_queue.append(group)
+                self.input_event.set()
+
         while self.running:
             try:
-                timeout = self.buffer_timeout if grouping else None
+                timeout = self.buffer_timeout if grouping else self.buffer_timeout
                 ch = self.input_queue.get(timeout = timeout)
+                if ch == chr(27):
+                    dump_group()
+                    grouping = True
                 buffer.append(ch)
-                grouping = True
             except queue.Empty:
-                if len(buffer) > 0:
-                    group = "".join(buffer)
-                    buffer.clear()
-                    self.group_queue.append(group)
-                    self.input_event.set()
+                dump_group()
                 grouping = False
 
 class InputAdaptor:

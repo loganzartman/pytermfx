@@ -26,6 +26,12 @@ def parse_mouse(seq):
     y = ord(seq[2]) - 33
     return 3, MouseEvent(x, y, left=left, right=right, down=down, up=up, btns=btns)
 
+def parse_esc_key(seq):
+    if len(seq) > 1:
+        # detect unrecognized escape sequence and remove it
+        return len(seq), None
+    return 1, KEY_ESC
+
 def parse_escape(seq, allow_unknown_escapes = True):
     """Parses an escape sequence.
     """
@@ -65,17 +71,14 @@ def parse_escape(seq, allow_unknown_escapes = True):
                     elif callable(val):
                         n_remove, result = val(seq)
                         seq = seq[n_remove:]
-                        yield result
+                        if result is not None:
+                            yield result
                     break
             else:
                 raise UnknownEscape("Unknown sequence: {}".format(seq))
     except UnknownEscape:
-        if allow_unknown_escapes:
-            # unrecognized sequence; just dump out raw values
-            # anything that checks .is_printable() can ignore these
-            for c in seq:
-                yield Key(c, printable=False)
-        else:
+        if not allow_unknown_escapes:
+            # unrecognized sequence
             raise
 
 def register_seq(*seq, val):
@@ -107,7 +110,7 @@ KEY_MAP[chr(13)] = KEY_ENTER
 # Misc
 register_seq("[M", val = parse_mouse)
 register_seq("[Z", val = KEY_TAB + MOD_SHIFT)
-register_seq("", val = KEY_ESC)
+register_seq("", val = parse_esc_key)
 
 # Arrow keys
 register_seq("[A", val = KEY_UP)
