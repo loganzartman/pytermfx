@@ -24,7 +24,7 @@ I originally wanted to create this to learn how to build terminal "screensavers"
 ## Installation
 Requires Python 3.
 
-`pip install pytermfx` (version 0.3.0)
+`pip install pytermfx` (version 0.4.0)
 
 [pytermfx on PyPI](https://pypi.org/project/pytermfx/)
 
