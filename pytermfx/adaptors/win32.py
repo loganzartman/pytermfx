@@ -3,10 +3,12 @@ from pytermfx.color import Color, ColorMode
 from pytermfx.adaptors.base import BaseAdaptor
 from pytermfx.adaptors.input import InputAdaptor
 from pytermfx.adaptors.vt100 import VT100Adaptor
-from threading import Timer
+from threading import Thread
+from time import sleep
 from ctypes import windll, Structure, byref
 from ctypes import c_int, c_short, c_ushort, c_bool, c_wchar, c_uint
 
+SIZE_POLL_DELAY = 0.2 # terminal size polling interval in seconds
 kernel32 = windll.kernel32
 WORD = c_short
 DWORD = c_int
@@ -81,10 +83,12 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
         kernel32.SetConsoleOutputCP(65001) # unicode code page
 
         # poll for resize
-        def handler():
-            resize_handler()
-            Timer(0.2, handler).start()
-        handler()
+        def thread_func():
+            while True:
+                sleep(SIZE_POLL_DELAY) # must sleep first so terminal initializes
+                resize_handler()
+        self.resize_thread = Thread(target=thread_func, daemon=True)
+        self.resize_thread.start()
     
     def set_cbreak(self, cbreak):
         """Enable or disable cbreak mode.

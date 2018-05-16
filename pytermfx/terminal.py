@@ -8,14 +8,16 @@ class Terminal:
             "input_file": input_file,
             "output_file": output_file, 
             "resize_handler": self._handle_resize}
-        
+        self._resize_handlers = []
+
         try:
             self.adaptor = PlatformAdaptor(**args)
         except:
             self.adaptor = BaseAdaptor(**args)
-
-        self._resize_handlers = [self.update_size]
-        self.update_size()
+        
+        self.w = 0
+        self.h = 0
+        self._handle_resize()
 
     def add_resize_handler(self, func):
         """Adds a handler for terminal resize.
@@ -23,6 +25,8 @@ class Terminal:
         self._resize_handlers.append(func)
     
     def _handle_resize(self):
+        if not self.update_size():
+            return
         for h in self._resize_handlers:
             h()
     
@@ -44,12 +48,23 @@ class Terminal:
         Sets self.w and self.h with current data if possible.
         Raises an exception if no size detection method works.
         """
+        current_size = (self.w, self.h)
+
+        # get new size
         try:
-            self.w, self.h = self.adaptor.get_size()
+            size = self.adaptor.get_size()
         except:
             if defaults is not None:
-                self.w, self.h = defaults
-            raise
+                size = defaults
+            else:
+                raise
+        
+        # return whether size actually changed
+        if size != current_size:
+            self.w = size[0]
+            self.h = size[1]
+            return True
+        return False
 
     def set_cbreak(self, cbreak=True):
         return self.adaptor.set_cbreak(cbreak)
