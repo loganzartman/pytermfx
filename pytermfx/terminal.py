@@ -38,7 +38,7 @@ class Terminal:
                 pass
             def __exit__(self, exc_type, exc_value, traceback):
                 self.term.reset()
-                if exc_type is type(KeyboardInterrupt):
+                if exc_type == KeyboardInterrupt:
                     return True
                 return False
         return TermManager(self)
