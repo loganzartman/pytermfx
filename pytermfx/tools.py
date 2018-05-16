@@ -1,8 +1,10 @@
 from pytermfx.constants import *
 from pytermfx import Terminal, NamedColor
+from pytermfx.keys import KEY_BACKSPACE, KEY_TAB, KEY_ENTER
 from threading import Thread
 import sys
 import time
+
 
 class TerminalApp:
     """A class for managing a terminal app that asynchronously accepts input.
@@ -11,7 +13,7 @@ class TerminalApp:
     The client may pass an on_input(char) parameter to accept a keyboard input.
     """
 
-    def __init__(self, terminal, framerate = 0, **kwargs):
+    def __init__(self, terminal, framerate=0, **kwargs):
         terminal.set_cbreak(True)
         self.terminal = terminal
         self.framerate = framerate
@@ -22,7 +24,7 @@ class TerminalApp:
         self._threads = []
 
     def create_thread(self, func):
-        t = Thread(target = func)
+        t = Thread(target=func)
         self._threads.append(t)
         return t
 
@@ -70,7 +72,7 @@ class TerminalApp:
         except KeyboardInterrupt:
             self.stop()
 
-    def stop(self, before_cleanup = lambda: None):
+    def stop(self, before_cleanup=lambda: None):
         if not self._running:
             return
         self._running = False
@@ -84,7 +86,8 @@ class TerminalApp:
         self.terminal.flush()
         self.terminal.reset()
 
-def draw_progress(terminal, progress=0, label="", *, color=NamedColor("white"), 
+
+def draw_progress(terminal, progress=0, label="", *, color=NamedColor("white"),
                   format="{0:.2f}%", left="[", right="]", fill="=", empty=" ",
                   head=">", bar_left=0):
     """Draw a progress bar.
@@ -111,10 +114,12 @@ def draw_progress(terminal, progress=0, label="", *, color=NamedColor("white"),
     terminal.flush()
     terminal.cursor_set_visible(True)
 
+
 def draw_hline(terminal, y, ch="═"):
     terminal.cursor_to(0, y)
     terminal.write(ch * terminal.w)
     terminal.flush()
+
 
 def draw_vline(terminal, x, ch="║"):
     for y in range(terminal.h):
@@ -122,38 +127,48 @@ def draw_vline(terminal, x, ch="║"):
         terminal.write(ch)
     terminal.flush()
 
+
 def print_hcenter(terminal, text, y):
     x = max(0, (terminal.w - len(text)) // 2)
     terminal.cursor_to(x, y)
     terminal.print(text)
 
-def read_line(terminal):
+
+def read_line(terminal, update=lambda s: terminal.write(s),
+              autocomplete=lambda: None):
     old_status = terminal.adaptor._cbreak
     terminal.set_cbreak(True)
     terminal.cursor_save()
 
     buffer = []
+
+    def stringify(): return "".join(str(k) for k in buffer)
+
     def redraw():
         terminal.cursor_restore()
-        for c in buffer:
-            terminal.write(c)
+        update(stringify())
         terminal.flush()
 
     ch = None
     while True:
         ch = terminal.getch()
-        if ch == chr(13) or ch == chr(10):
+        if ch == KEY_ENTER:
             break
-        elif ch == chr(127) or ch == chr(8):
+        elif ch == KEY_BACKSPACE:
             if len(buffer) > 0:
                 terminal.cursor_move(-1, 0)
                 terminal.write(" ")
                 buffer.pop()
+        elif ch == KEY_TAB:
+            word = stringify().split(" ")[-1]
+            candidate = autocomplete(word)
+            if candidate is not None:
+                buffer = buffer[:-len(word)]
+                buffer += candidate
         elif ch.is_printable():
             buffer.append(ch)
         redraw()
-    
+
     terminal.set_cbreak(old_status)
     terminal.writeln()
-    time.sleep(0.1)
-    return "".join(str(k) for k in buffer)
+    return stringify()
