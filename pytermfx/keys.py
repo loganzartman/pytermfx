@@ -10,7 +10,16 @@ class Key:
 		if isinstance(code, str):
 			code = ord(code)
 		
+		# detect printability (non-control)
+		if printable == None:
+			printable = code and unicodedata.category(chr(code)) != "Cc"
+		self.printable = printable
+
+		# automatically name printable keys
+		if name == None and printable:
+			name = chr(code)
 		self.name = name
+
 		self.code = code
 		self.ctrl = ctrl
 		self.alt = alt
@@ -20,11 +29,6 @@ class Key:
 			self.shift = shift or chr(code).isupper()
 		else:
 			self.shift = shift
-		
-		# detect printability (non-control)
-		if printable == None:
-			printable = code and unicodedata.category(chr(code)) != "Cc"
-		self.printable = printable
 	
 	def is_printable(self):
 		return self.printable
@@ -47,8 +51,10 @@ class Key:
 			return False
 		elif isinstance(other, int):
 			return self == Key(other)
+		elif other == None:
+			return False
 		else:
-			raise RuntimeError("Unsupported type in __eq__: " + type(other))
+			raise RuntimeError("Unsupported type in __eq__: " + str(type(other)))
 
 	def __add__(self, other):
 		k = self.clone()
@@ -70,9 +76,11 @@ class Key:
 		return ""
 	
 	def __repr__(self):
-		keys = (self.ctrl, self.alt, self.shift, self.name or self.code)
-		names = ("ctrl", "alt", "shift", self.name or chr(self.code))
-		return "+".join(name for k, name in zip(keys, names) if k)
+		keys = (self.ctrl, self.alt, self.shift, self.code, self.name)
+		names = ("ctrl", "alt", "shift", "code", "name")
+		return "Key({})".format(", ".join(
+			"{}={}".format(n, repr(k)) 
+			for k, n in zip(keys, names) if k))
 	
 	def clone(self):
 		return Key(self.code, self.name, ctrl = self.ctrl, alt = self.alt, shift = self.shift)
@@ -144,9 +152,11 @@ class MouseEvent:
 		return "mouse"
 
 	def __repr__(self):
-		btn_states = zip((self.down, self.up, self.left, self.right), ("down", "up", "left", "right"))
-		btn_string = "+".join(name for state, name in btn_states if state)
-		return "".join(("mouse ", btn_string, " @ ", str(self.x), ",", str(self.y)))
+		keys = (self.x, self.y, self.left, self.right, self.down, self.up)
+		names = ("x", "y", "left", "right", "down", "up")
+		return "MouseEvent({})".format(", ".join(
+			"{}={}".format(n, repr(k)) 
+			for k, n in zip(keys, names) if k))
 
 	def clone(self):
 		return MouseEvent(self.x, self.y)
