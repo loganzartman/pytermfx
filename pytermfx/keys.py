@@ -1,4 +1,5 @@
 from numbers import Number
+import os
 
 class Key:
 	def __init__(self, key, ctrl=False, alt=False, shift=False, printable=False):
@@ -57,13 +58,44 @@ class Key:
 	def clone(self):
 		return Key(self.key, ctrl = self.ctrl, alt = self.alt, shift = self.shift)
 
+class AliasedKeys(Key):
+	def __init__(self, *keys, printable=False):
+		self.keys = []
+		self.printable = printable
+		for key in keys:
+			if not isinstance(key, Key):
+				key = Key(key)
+			self.keys.append(key)
+	
+	def char(self):
+		return self.keys[0].char()
+	
+	def __hash__(self):
+		return hash(hash(key) for key in self.keys)
+	
+	def __eq__(self, other):
+		return any(key == other for key in self.keys)
+	
+	def __iadd__(self, other):
+		k = self.clone()
+		for key in k.keys:
+			key += other
+		return k
+	
+	def str_long(self):
+		return ", ".join(key.str_long() for key in self.keys)
+
+	def clone(self):
+		return AliasedKeys(self.keys)
+
 KEY_UP = Key("up")
 KEY_DOWN = Key("down")
 KEY_RIGHT = Key("right")
 KEY_LEFT = Key("left")
 
 KEY_TAB = Key("\t")
-KEY_BACKSPACE = Key(8)
+KEY_BACKSPACE = AliasedKeys(8, 127)
+KEY_ENTER = Key(os.linesep)
 
 KEY_ESC = Key("escape")
 KEY_INS = Key("insert")
