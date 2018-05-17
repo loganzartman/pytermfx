@@ -53,14 +53,15 @@ class InputDaemon:
         # Grouper thread body
         buffer = []
         grouping = True
-        timeout = 0
+        timeout = None
 
         def dump_group():
             """Complete the current group of characters and dump to output.
             """
-            nonlocal timeout
+            nonlocal timeout, grouping
             if len(buffer) > 0:
-                timeout = 0
+                timeout = None
+                grouping = False
                 group = "".join(buffer)
                 buffer.clear()
                 self.group_queue.append(group)
@@ -79,10 +80,11 @@ class InputDaemon:
                 if len(buffer) == 2 and ch != "M":
                     timeout = self.buffer_timeout
                 buffer.append(ch) # append character to group
+                if not grouping:
+                    dump_group()
             except queue.Empty:
                 # timeout occurred; dump the group
                 dump_group()
-                grouping = False
 
 class InputAdaptor:
     def __init__(self, *args, read_func, **kwargs):
