@@ -54,7 +54,7 @@ class Key:
 		elif other == None:
 			return False
 		else:
-			raise RuntimeError("Unsupported type in __eq__: " + str(type(other)))
+			return False
 
 	def __add__(self, other):
 		k = self.clone()

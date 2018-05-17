@@ -1,15 +1,12 @@
 from pytermfx import Terminal
 
-t = Terminal()
-t.set_cbreak(True)
-t.mouse_enable("move")
+if __name__ == "__main__":
+	t = Terminal()
+	t.set_cbreak(True)
+	t.mouse_enable("move")
 
-try:
-	while True:
-		s = t.getch_raw()
-		codes = [ord(c) for c in s]
-		t.print(*codes, sep=", ")
-except KeyboardInterrupt:
-	pass
-finally:
-	t.writeln().flush()
+	with t.managed():
+		while True:
+			s = t.getch_raw()
+			codes = [ord(c) for c in s]
+			t.print(*codes, sep=", ")
