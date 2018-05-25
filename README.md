@@ -26,6 +26,8 @@ Requires Python 3.
 
 `pip install pytermfx` (version 0.4.3)
 
+Alternatively, clone the repository and then run `pip install -e .` in the top directory. This will install the (potentially unstable) latest commit and update the installation when you pull new commits.
+
 [pytermfx on PyPI](https://pypi.org/project/pytermfx/)
 
 ## Notes
