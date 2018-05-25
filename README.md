@@ -178,16 +178,16 @@ from pytermfx import Terminal
 from pytermfx.keys import KEY_ESC
 
 t = Terminal()
-t.set_cbreak(True)
 
-key = None
-while key != KEY_ESC:
-    key = t.getch()
-    if key == "3":
-        t.print("Fizz")
-    elif key == "5":
-        t.print("Buzz")
-t.reset()
+with t.managed():
+    t.set_cbreak(True)
+    key = None
+    while key != KEY_ESC:
+        key = t.getch()
+        if key == "3":
+            t.print("Fizz")
+        elif key == "5":
+            t.print("Buzz")
 ```
 In this example, pressing the `3` key prints `"Fizz"` and pressing the `5` key prints `"Buzz"`. The program exits when the user presses the `escape` key.
 
