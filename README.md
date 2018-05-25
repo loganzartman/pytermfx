@@ -29,7 +29,8 @@ Requires Python 3.
 [pytermfx on PyPI](https://pypi.org/project/pytermfx/)
 
 ## Notes
-The API is currently unstable. 0.x versions may be incompatible.
+* Very limited feature detection (does not yet read terminfo database).
+* The API is currently unstable. 0.x versions may be incompatible.
 
 ## Usage Examples
 1. [Creating a Terminal](#creating-a-terminal)
