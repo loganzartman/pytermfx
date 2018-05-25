@@ -7,8 +7,8 @@ I originally wanted to create this to learn how to build terminal "screensavers"
 
 ## Capabilities
 * Cursor movement, screen clearing, etc. (`pytermfx.Terminal`)
-* Automatic terminal size detection (`Terminal.w`, `Terminal.h`)
-* Text coloring in 256-color or RGB format (`pytermfx.Color`)
+* Automatic terminal (re)size detection (`Terminal.w`, `Terminal.h`)
+* Text coloring in 256-color or True Color RGB format (`pytermfx.Color`)
 * Text styling (`pytermfx.Style`)
 * Toggle cbreak mode (`Terminal.set_cbreak()`)
 * Keyboard input with support for escape sequences (`pytermfx.Terminal`, `Terminal.getch()`)
@@ -19,10 +19,10 @@ I originally wanted to create this to learn how to build terminal "screensavers"
 * More
 
 ## OS Support
-* Supports Unix systems and Windows 10. Good support for most terminal emulators, such as `urxvt`, `st`, `xterm`. Support for Windows before Windows 10 updated console is a work in progess (text styling currently does not work, among other issues).
+* Supports **Unix-like** systems and **Windows 10**. Good support for most terminal emulators, such as `urxvt`, `st`, `xterm`. Support for Windows before Windows 10 updated console is a work in progess (text styling currently does not work, among other issues).
 
 ## Installation
-Requires Python 3.
+Requires **Python 3**.
 
 `pip install pytermfx` (version 0.4.3)
 
@@ -31,7 +31,7 @@ Alternatively, clone the repository and then run `pip install -e .` in the top d
 [pytermfx on PyPI](https://pypi.org/project/pytermfx/)
 
 ## Notes
-* Very limited feature detection (does not yet read terminfo database).
+* Very **limited feature detection** (does not yet read terminfo database).
 * The API is currently unstable. 0.x versions may be incompatible.
 
 ## Usage Examples
