@@ -7,8 +7,8 @@ I originally wanted to create this to learn how to build terminal "screensavers"
 
 ## Capabilities
 * Cursor movement, screen clearing, etc. (`pytermfx.Terminal`)
-* Automatic terminal size detection (`Terminal.w`, `Terminal.h`)
-* Text coloring in 256-color or RGB format (`pytermfx.Color`)
+* Automatic terminal (re)size detection (`Terminal.w`, `Terminal.h`)
+* Text coloring in 256-color or True Color RGB format (`pytermfx.Color`)
 * Text styling (`pytermfx.Style`)
 * Toggle cbreak mode (`Terminal.set_cbreak()`)
 * Keyboard input with support for escape sequences (`pytermfx.Terminal`, `Terminal.getch()`)
@@ -19,17 +19,20 @@ I originally wanted to create this to learn how to build terminal "screensavers"
 * More
 
 ## OS Support
-* Supports Unix systems and Windows 10. Good support for most terminal emulators, such as `urxvt`, `st`, `xterm`. Support for Windows before Windows 10 updated console is a work in progess (text styling currently does not work, among other issues).
+* Supports **Unix-like** systems and **Windows 10**. Good support for most terminal emulators, such as `urxvt`, `st`, `xterm`. Support for Windows before Windows 10 updated console is a work in progess (text styling currently does not work, among other issues).
 
 ## Installation
-Requires Python 3.
+Requires **Python 3**.
 
 `pip install pytermfx` (version 0.4.3)
+
+Alternatively, clone the repository and then run `pip install -e .` in the top directory. This will install the (potentially unstable) latest commit and update the installation when you pull new commits.
 
 [pytermfx on PyPI](https://pypi.org/project/pytermfx/)
 
 ## Notes
-The API is currently unstable. 0.x versions may be incompatible.
+* Very **limited feature detection** (does not yet read terminfo database).
+* The API is currently unstable. 0.x versions may be incompatible.
 
 ## Usage Examples
 1. [Creating a Terminal](#creating-a-terminal)
@@ -175,16 +178,16 @@ from pytermfx import Terminal
 from pytermfx.keys import KEY_ESC
 
 t = Terminal()
-t.set_cbreak(True)
 
-key = None
-while key != KEY_ESC:
-    key = t.getch()
-    if key == "3":
-        t.print("Fizz")
-    elif key == "5":
-        t.print("Buzz")
-t.reset()
+with t.managed():
+    t.set_cbreak(True)
+    key = None
+    while key != KEY_ESC:
+        key = t.getch()
+        if key == "3":
+            t.print("Fizz")
+        elif key == "5":
+            t.print("Buzz")
 ```
 In this example, pressing the `3` key prints `"Fizz"` and pressing the `5` key prints `"Buzz"`. The program exits when the user presses the `escape` key.
 
