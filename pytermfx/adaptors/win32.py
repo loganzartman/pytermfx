@@ -171,17 +171,20 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
 
     def cursor_get_pos(self):
         """Retrieve the current (x,y) cursor position.
-        This is slow, so avoid using when unnecessary.
         """
         self.flush()
-        info = CONSOLE_CURSOR_INFO()
-        kernel32.GetConsoleCursorInfo(self.out_file, byref(info))
-        return (info.dwSize.X, info.dwSize.Y)
+        info = CONSOLE_SCREEN_BUFFER_INFO()
+        kernel32.GetConsoleScreenBufferInfo(self.out_file, byref(info))
+        return (info.dwCursorPosition.X, info.dwCursorPosition.Y)
 
     def cursor_to(self, x, y):
         self.flush()
         pos = COORD(X=x, Y=y)
         kernel32.SetConsoleCursorPosition(self.out_file, pos)
+    
+    def cursor_move(self, x, y):
+        cur_x, cur_y = self.cursor_get_pos()
+        self.cursor_to(cur_x + x, cur_y + y)
 
 class WinNTAdaptor(Win10Adaptor):
     def __init__(self, input_file, output_file, resize_handler=lambda: None):
