@@ -133,8 +133,12 @@ def print_hcenter(terminal, text, y):
     terminal.print(text)
 
 
-def read_line(terminal, update=lambda s: terminal.write(s),
+def read_line(terminal, update=None,
               autocomplete=lambda: None):
+    # default update function
+    if update == None:
+        update = lambda s: terminal.write(s)
+    
     old_status = terminal.adaptor._cbreak
     terminal.set_cbreak(True)
     terminal.cursor_save()

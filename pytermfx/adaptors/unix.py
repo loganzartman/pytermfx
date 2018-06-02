@@ -45,21 +45,28 @@ class UnixAdaptor(InputAdaptor, VT100Adaptor):
         Raises an exception if no size detection method works.
         """
         def f():
-            self.cursor_save()
             self.cursor_to(9999, 9999)
             x, y = self.cursor_get_pos()
             w = x + 1
             h = y + 1
-            self.cursor_restore()
             return (w, h)
+
+        self.cursor_save()
         tries = 0
+        result = None
         while tries < 3:
             try:
-                return f()
+                result = f()
+                break
             except:
                 pass
-        raise RuntimeError("Failed to get terminal size.")
-    
+        self.cursor_restore()
+        self.flush()
+
+        if result is None:
+            raise RuntimeError("Failed to get terminal size.")
+        return result
+
     def cursor_get_pos(self):
         old_status = self._cbreak
         if not self._cbreak:
@@ -73,7 +80,11 @@ class UnixAdaptor(InputAdaptor, VT100Adaptor):
         # read result from stdin
         status = self.getch_raw()
         match = re.match(r"\x1b\[(\d+);(\d+)R", status)
-        if not match:
-            raise RuntimeError("Failed to parse size response: " + status)
+
+        try:
+            if not match:
+                raise RuntimeError("Failed to parse size response: " + status)
+        finally:
+            self.set_cbreak(old_status)
 
         return (int(match.group(2)) - 1, int(match.group(1)) - 1)
