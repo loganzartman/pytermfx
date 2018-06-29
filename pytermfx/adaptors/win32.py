@@ -7,6 +7,7 @@ from threading import Thread
 from time import sleep
 from ctypes import windll, Structure, byref
 from ctypes import c_int, c_short, c_ushort, c_bool, c_wchar, c_uint
+import msvcrt
 
 SIZE_POLL_DELAY = 0.2 # terminal size polling interval in seconds
 kernel32 = windll.kernel32
@@ -32,6 +33,9 @@ ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
 WIN10_INPUT_CBREAK  = ENABLE_VIRTUAL_TERMINAL_INPUT | ENABLE_PROCESSED_INPUT
 WIN10_INPUT_DEFAULT = ENABLE_PROCESSED_INPUT | ENABLE_EXTENDED_FLAGS | ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE
 WIN10_OUTPUT = ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_PROCESSED_OUTPUT
+
+def win32_handle(file):
+    return msvcrt.get_osfhandle(file.fileno())
 
 # structs from wincon.h
 class COORD(Structure):
@@ -72,14 +76,14 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
 
         # store initial console mode
         self._old_output_mode = c_short()
-        kernel32.GetConsoleMode(self.out_file, byref(self._old_output_mode))
+        kernel32.GetConsoleMode(self.out_handle, byref(self._old_output_mode))
         self._old_input_mode = c_short()
-        kernel32.GetConsoleMode(self.in_file, byref(self._old_input_mode))
+        kernel32.GetConsoleMode(self.in_handle, byref(self._old_input_mode))
         self._old_code_page = kernel32.GetConsoleOutputCP()
 
         # set console mode
-        kernel32.SetConsoleMode(self.out_file, c_short(WIN10_OUTPUT))
-        kernel32.SetConsoleMode(self.in_file, c_short(WIN10_INPUT_DEFAULT))
+        kernel32.SetConsoleMode(self.out_handle, c_short(WIN10_OUTPUT))
+        kernel32.SetConsoleMode(self.in_handle, c_short(WIN10_INPUT_DEFAULT))
         kernel32.SetConsoleOutputCP(65001) # unicode code page
 
         # poll for resize
@@ -90,6 +94,14 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
         self.resize_thread = Thread(target=thread_func, daemon=True)
         self.resize_thread.start()
     
+    @property
+    def in_handle(self):
+        return win32_handle(self.in_file)
+    
+    @property
+    def out_handle(self):
+        return win32_handle(self.out_file)
+
     def set_cbreak(self, cbreak):
         """Enable or disable cbreak mode.
         """
@@ -97,10 +109,10 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
             return
         
         if cbreak:
-            kernel32.SetConsoleMode(self.in_file, c_short(WIN10_INPUT_CBREAK))
+            kernel32.SetConsoleMode(self.in_handle, c_short(WIN10_INPUT_CBREAK))
             self._cbreak = True
         else:
-            kernel32.SetConsoleMode(self.in_file, c_short(WIN10_INPUT_DEFAULT))
+            kernel32.SetConsoleMode(self.in_handle, c_short(WIN10_INPUT_DEFAULT))
             self._cbreak = False
 
     def get_size(self, defaults=None):
@@ -108,7 +120,7 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
         Raises an exception if no size detection method works.
         """
         info = CONSOLE_SCREEN_BUFFER_INFO()
-        kernel32.GetConsoleScreenBufferInfo(self.out_file, byref(info))
+        kernel32.GetConsoleScreenBufferInfo(self.out_handle, byref(info))
         w = info.srWindow.Right - info.srWindow.Left
         h = info.srWindow.Bottom - info.srWindow.Top
         return (w+1, h+1)
@@ -117,7 +129,7 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
         ch = WCHAR()
         len_read = DWORD()
         kernel32.ReadConsoleW(
-            self.in_file,
+            self.in_handle,
             byref(ch),
             DWORD(1),
             byref(len_read),
@@ -131,7 +143,7 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
         msg = "".join(self._buffer)
         written = c_short()
         kernel32.WriteConsoleW(
-            self.out_file,
+            self.out_handle,
             msg,
             c_short(len(msg)),
             byref(written),
@@ -146,14 +158,14 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
 
         written = DWORD()
         kernel32.FillConsoleOutputAttribute(
-            self.out_file,
+            self.out_handle,
             c_short(),
             n_length,
             write_coord,
             byref(written)
         )
         kernel32.FillConsoleOutputCharacterW(
-            self.out_file,
+            self.out_handle,
             WCHAR(" "),
             n_length,
             write_coord,
@@ -165,8 +177,8 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
         """Clean up the terminal state before exiting.
         """
         VT100Adaptor.reset(self)
-        kernel32.SetConsoleMode(self.out_file, self._old_output_mode)
-        kernel32.SetConsoleMode(self.in_file, self._old_input_mode)
+        kernel32.SetConsoleMode(self.out_handle, self._old_output_mode)
+        kernel32.SetConsoleMode(self.in_handle, self._old_input_mode)
         kernel32.SetConsoleOutputCP(self._old_code_page)
 
     def cursor_get_pos(self):
@@ -174,13 +186,13 @@ class Win10Adaptor(InputAdaptor, VT100Adaptor):
         """
         self.flush()
         info = CONSOLE_SCREEN_BUFFER_INFO()
-        kernel32.GetConsoleScreenBufferInfo(self.out_file, byref(info))
+        kernel32.GetConsoleScreenBufferInfo(self.out_handle, byref(info))
         return (info.dwCursorPosition.X, info.dwCursorPosition.Y)
 
     def cursor_to(self, x, y):
         self.flush()
         pos = COORD(X=x, Y=y)
-        kernel32.SetConsoleCursorPosition(self.out_file, pos)
+        kernel32.SetConsoleCursorPosition(self.out_handle, pos)
     
     def cursor_move(self, x, y):
         cur_x, cur_y = self.cursor_get_pos()
@@ -196,12 +208,12 @@ class WinNTAdaptor(Win10Adaptor):
 
         # store initial console mode
         self._old_mode = c_short()
-        kernel32.GetConsoleMode(self.out_file, byref(self._old_mode))
+        kernel32.GetConsoleMode(self.out_handle, byref(self._old_mode))
 
         # set console mode
         out_mode = c_short(ENABLE_PROCESSED_OUTPUT | 
                            ENABLE_WRAP_AT_EOL_OUTPUT)
-        kernel32.SetConsoleMode(self.out_file, out_mode)
+        kernel32.SetConsoleMode(self.out_handle, out_mode)
 
     def style(self, *styles):
         pass

@@ -1,9 +1,9 @@
 from pytermfx.color import Color, ColorMode
-from pytermfx.adaptors import BaseAdaptor, PlatformAdaptor, STDIN, STDOUT
+from pytermfx.adaptors import BaseAdaptor, PlatformAdaptor
 import sys
 
 class Terminal:
-    def __init__(self, input_file = STDIN, output_file = STDOUT):
+    def __init__(self, input_file = sys.stdin, output_file = sys.stdout):
         args = {
             "input_file": input_file,
             "output_file": output_file, 
