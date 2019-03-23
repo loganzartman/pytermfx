@@ -1,6 +1,8 @@
-# pytermfx
+# pytermfx (deprecated)
 ### Terminal interaction and formatting for Python without curses
 ---
+
+## please try [termpixels](https://github.com/loganzartman/termpixels), my newer, better terminal library.
 
 ## Motivation
 I originally wanted to create this to learn how to build terminal "screensavers", like [pipes.sh](https://github.com/pipeseroni/pipes.sh) (see my [pipes.py](https://github.com/loganzartman/pytermfx/blob/master/pytermfx/examples/pipes.py)). It might also be useful for things like [progress bars](https://github.com/loganzartman/pytermfx/blob/master/pytermfx/examples/progress_bar.py), or just simple text coloring in the console.
